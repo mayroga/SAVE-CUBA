@@ -337,13 +337,14 @@ async def webhook_stripe(request: Request):
     except Exception:
         raise HTTPException(status_code=400, detail="Firma de Webhook inválida")
 
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        id_sesion_local = session.get("metadata", {}).get("id_sesion_local")
-                if id_sesion_local and id_sesion_local in SESIONES_TEMPORALES:
-            datos_cliente = SESIONES_TEMPORALES[id_sesion_local]
-            ejecutar_mapeo_y_guardado(datos_cliente, f"{id_sesion_local}.pdf")
-            del SESIONES_TEMPORALES[id_sesion_local]  # Destrucción en memoria para privacidad total
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+            id_sesion_local = session.get("metadata", {}).get("id_sesion_local")
+            
+            if id_sesion_local and id_sesion_local in SESIONES_TEMPORALES:
+                datos_cliente = SESIONES_TEMPORALES[id_sesion_local]
+                ejecutar_mapeo_y_guardado(datos_cliente, f"{id_sesion_local}.pdf")
+                del SESIONES_TEMPORALES[id_sesion_local]  # Destrucción en memoria para privacidad total
 
     return {"status": "success"}
 
