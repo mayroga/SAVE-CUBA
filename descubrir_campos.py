@@ -19,5 +19,6 @@ extraer_mapeo_real("plantillas/pasaporte.pdf", "campos_pasaporte.txt")
 extraer_mapeo_real("plantillas/i485.pdf", "campos_i485.txt")
 extraer_mapeo_real("plantillas/i765.pdf", "campos_i765.txt")
 extraer_mapeo_real("plantillas/g1450.pdf", "campos_g1450.txt")
+extraer_mapeo_real("plantillas/n400.pdf", "campos_n400.txt")
 
 print("¡Hecho! Revisa los archivos .txt generados para ver los nombres exactos de los campos.")
