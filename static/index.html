@@ -1,268 +1,187 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAVE CUBA - Sistema de Gestión Documental</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>SAVE CUBA - Simple y Seguro</title>
     <style>
-        :root {
-            --primary-color: #0f172a;
-            --accent-color: #2563eb;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-color: #334155;
-            --border-color: #cbd5e1;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .container {
-            background: var(--card-bg);
-            width: 100%;
-            max-width: 650px;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-        h2 {
-            color: var(--primary-color);
-            text-align: center;
-            margin-bottom: 25px;
-            font-size: 24px;
-        }
-        .form-group {
-            margin-bottom: 16px;
-        }
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 6px;
-            font-size: 14px;
-            color: var(--primary-color);
-        }
-        input, select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 14px;
-            box-sizing: border-box;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        input:focus, select:focus {
-            border-color: var(--accent-color);
-        }
-        .row {
-            display: flex;
-            gap: 15px;
-        }
-        .col {
-            flex: 1;
-        }
-        .conditional-field {
-            display: none;
-            margin-top: 15px;
-            padding: 15px;
-            background: #f1f5f9;
-            border-radius: 6px;
-            border-left: 4px solid var(--accent-color);
-        }
-        button {
-            width: 100%;
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: background 0.2s;
-        }
-        button:hover {
-            background-color: #1d4ed8;
-        }
-        #resultado {
-            margin-top: 20px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 14px;
-        }
+        body { font-size: 16px; background: #0f172a; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        #main-container { width: 100%; max-width: 600px; }
+        .card-blanca { background: #1e293b; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin-bottom: 20px; }
+        .seccion-paso { display: none; }
+        .seccion-paso.activo { display: block; }
+        .titulo-pantalla { font-size: 24px; color: #60a5fa; margin-top: 0; text-align: center; font-weight: bold; }
+        .texto-simple { font-size: 15px; color: #cbd5e1; line-height: 1.6; text-align: justify; }
+        label { font-size: 14px; color: #94a3b8; display: block; margin-top: 15px; font-weight: 600; }
+        input, select, textarea { width: 100%; padding: 14px; margin-top: 6px; border-radius: 12px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 16px; box-sizing: border-box; }
+        textarea { resize: none; height: 90px; }
+        .btn-accion { width: 100%; padding: 16px; background: #3b82f6; color: white; font-size: 18px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 25px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+        .btn-accion:hover { background: #2563eb; transform: translateY(-1px); }
+        .btn-verde { background: #059669; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); }
+        .btn-atras { background: transparent; border: 1px solid #64748b; color: #cbd5e1; padding: 12px; width: 100%; border-radius: 12px; margin-top: 15px; cursor: pointer; font-size: 15px; }
+        .caja-aviso { background: #334155; padding: 15px; border-radius: 12px; font-size: 13px; line-height: 1.5; color: #cbd5e1; margin-bottom: 20px; border-left: 5px solid #f59e0b; }
+        .paso-oculto { display: none; }
+        .boton-servicio { background: #1e293b; border: 2px solid #3b82f6; border-radius: 16px; padding: 20px; margin-bottom: 15px; cursor: pointer; text-align: left; transition: all 0.2s ease; display: block; width: 100%; }
+        .boton-servicio:hover { background: #2563eb; border-color: #60a5fa; transform: translateY(-2px); }
+        .servicio-titulo { font-size: 20px; font-weight: bold; color: #60a5fa; margin: 0 0 5px 0; }
+        .servicio-descripcion { font-size: 14px; color: #94a3b8; margin: 0; line-height: 1.4; }
     </style>
 </head>
 <body>
+<div id="main-container">
+    <div class="card-blanca" style="text-align: center; padding: 15px;">
+        <h2 id="logo-clickable" style="color:#60a5fa; margin:0; font-size: 28px; letter-spacing: 1px; cursor: pointer; user-select: none;" onclick="registrarClickSecreto()">SAVE CUBA</h2>
+        <p style="color: #4ade80; margin: 4px 0 0 0; font-size: 14px; font-weight: bold;">Tus trámites listos, seguros y sin intermediarios</p>
+    </div>
+    <!-- PASO 1: PANTALLA DE ENTRADA Y CONTROL LEGAL -->
+    <div id="paso-bienvenida" class="card-blanca seccion-paso activo">
+        <h3 class="titulo-pantalla">Cláusula de Protección de Datos y Uso</h3>
+        <div class="caja-aviso">
+            <strong>🔒 PRIVACIDAD TOTAL PARA TU DISPOSITIVO:</strong><br>
+            SAVE CUBA es un sistema informático privado. No guardamos tus datos personales ni bancarios en ningún servidor. La información reside únicamente en tu dispositivo.
+        </div>
+        <p class="texto-simple">Nuestra LLC no es una firma de abogados ni notarios. Solo proveemos un software automatizado para el llenado de formularios públicos. Al continuar, aceptas estas condiciones bajo tu supervisión.</p>
+        <button class="btn-accion btn-verde" onclick="despertarServidorYContinuar()">ACEPTO LOS TÉRMINOS Y DESEO INICIAR</button>
+    </div>
 
-<div class="container">
-    <h2>SAVE CUBA - Trámites y Planillas</h2>
-    <form id="tramiteForm">
+    <!-- PASO 2: MENÚ DE SERVICIOS -->
+    <div id="pantalla-inicio" class="seccion-paso">
+        <p style="text-align: center; color: #94a3b8; margin-bottom: 20px; font-size: 16px;">Toca el servicio que necesitas hoy:</p>
+        <button class="boton-servicio" onclick="irAlFormulario('paquete_completo_uscis')">
+            <div class="servicio-titulo">🇺🇸 1. Residencia por Ley de Ajuste</div>
+            <div class="servicio-descripcion">Incluye Permiso de Trabajo (I-765) de forma conjunta.</div>
+        </button>
+        <button class="boton-servicio" onclick="irAlFormulario('pasaporte_cubano')">
+            <div class="servicio-titulo">🇨🇺 2. Pasaporte Cubano</div>
+            <div class="servicio-descripcion">Renovación o prórroga obligatoria para trámites consulares.</div>
+        </button>
+        <button class="boton-servicio" onclick="irAlFormulario('naturalizacion_n400')">
+            <div class="servicio-titulo">⭐ 3. Ciudadanía Americana</div>
+            <div class="servicio-descripcion">Para residentes permanentes listos para el examen N-400.</div>
+        </button>
+    </div>
+
+    <!-- PASO 3: FORMULARIO INTERACTIVO -->
+    <div id="paso-formulario" class="card-blanca seccion-paso">
+        <h3 class="titulo-pantalla" id="titulo-servicio">Rellena tus Datos</h3>
+        <p style="font-size: 13px; color: #4ade80; text-align: center; margin-top: -10px; font-weight: bold;" id="alerta-recuerdo"></p>
         
-        <div class="form-group">
-            <label for="tramite_tipo">Seleccione el Trámite:</label>
-            <select id="tramite_tipo" name="tramite_tipo" required onchange="cambiarFlujoTrámite()">
-                <option value="">-- Elija una opción --</option>
-                <option value="paquete_completo_uscis">Residencia y Trabajo USA (USCIS)</option>
-                <option value="pasaporte_cubano">Pasaporte Cubano (Trámite Consular)</option>
-                <option value="naturalizacion_n400">Ciudadanía Americana (N-400)</option>
-            </select>
+        <label>Primer Nombre:</label>
+        <input type="text" id="sc_nombre1" placeholder="Ej: Juan" oninput="guardarDatoLocal('sc_nombre1', this.value)">
+        <label>Segundo Nombre:</label>
+        <input type="text" id="sc_nombre2" placeholder="Ej: Carlos" oninput="guardarDatoLocal('sc_nombre2', this.value)">
+        <label>Primer Apellido:</label>
+        <input type="text" id="sc_apellido1" placeholder="Ej: Pérez" oninput="guardarDatoLocal('sc_apellido1', this.value)">
+        <label>Segundo Apellido:</label>
+        <input type="text" id="sc_apellido2" placeholder="Ej: Rodríguez" oninput="guardarDatoLocal('sc_apellido2', this.value)">
+        <label>Fecha de Nacimiento:</label>
+        <input type="date" id="sc_fecha_nacimiento" oninput="guardarDatoLocal('sc_fecha_nacimiento', this.value)">
+
+        <div id="bloque-federal">
+            <label>Alien Registration Number (9 números):</label>
+            <input type="text" id="sc_anumber" placeholder="Ej: 123456789" maxlength="9" oninput="guardarDatoLocal('sc_anumber', this.value)">
+            <label>Último empleo en Cuba (en español):</label>
+            <textarea id="sc_empleo_cuba" placeholder="Ej: Trabajé en La Habana como chofer..." oninput="guardarDatoLocal('sc_empleo_cuba', this.value)"></textarea>
         </div>
 
-        <div class="row">
-            <div class="col">
-                <div class="form-group">
-                    <label for="primer_nombre">Primer Nombre *</label>
-                    <input type="text" id="primer_nombre" name="primer_nombre" required>
-                </div>
-            </div>
-            <div class="col">
-                <div class="form-group">
-                    <label for="segundo_nombre">Segundo Nombre</label>
-                    <input type="text" id="segundo_nombre" name="segundo_nombre">
-                </div>
-            </div>
+        <div id="bloque-consular" style="display:none;">
+            <label>Número de Pasaporte Cubano:</label>
+            <input type="text" id="sc_pasaporte_num" placeholder="Ej: H123456" oninput="guardarDatoLocal('sc_pasaporte_num', this.value)">
+            <label>Provincia de Origen:</label>
+            <input type="text" id="sc_provincia" placeholder="Ej: Camagüey" oninput="guardarDatoLocal('sc_provincia', this.value)">
+            <label>Año de salida:</label>
+            <input type="text" id="sc_ano_salida" placeholder="Ej: 2021" maxlength="4" oninput="guardarDatoLocal('sc_ano_salida', this.value)">
         </div>
 
-        <div class="row">
-            <div class="col">
-                <div class="form-group">
-                    <label for="primer_apellido">Primer Apellido *</label>
-                    <input type="text" id="primer_apellido" name="primer_apellido" required>
-                </div>
-            </div>
-            <div class="col">
-                <div class="form-group">
-                    <label for="segundo_apellido">Segundo Apellido</label>
-                    <input type="text" id="segundo_apellido" name="segundo_apellido">
-                </div>
-            </div>
+        <button id="btnPagar" class="btn-accion btn-verde" onclick="solicitarCheckoutStripe()">💳 PROCESAR Y PAGAR</button>
+        <!-- PANEL SECRETO -->
+        <div id="bloque-secreto-dev" class="paso-oculto" style="background: #0f172a; padding: 15px; border-radius: 12px; border: 1px dashed #ef4444; margin-top: 20px;">
+            <p style="font-size: 13px; color: #f59e0b; margin: 0 0 10px 0; font-weight: bold; text-align: center;">🔧 Modo Desarrollador</p>
+            <input type="text" id="dev_user" placeholder="Usuario" style="margin-bottom: 5px;">
+            <input type="password" id="dev_pass" placeholder="Contraseña">
+            <button id="btnPruebaGratis" class="btn-accion" style="margin-top: 12px; background: #475569;" onclick="solicitarProcesamientoGratisDev()">🚀 GENERAR GRATIS</button>
         </div>
+        <button class="btn-atras" onclick="regresarAlMenuServicios()">← CAMBIAR DE SERVICIO</button>
+    </div>
 
-        <div class="form-group">
-            <label for="fecha_nacimiento">Fecha de Nacimiento *</label>
-            <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" required>
-        </div>
-<!-- CAMPOS CONDICIONALES PARA USCIS (RESIDENCIA / CIUDADANÍA) -->
-        <div id="seccion_uscis" class="conditional-field">
-            <div class="form-group">
-                <label for="anumber">Número de Registro (A-Number) *</label>
-                <input type="text" id="anumber" name="anumber" placeholder="Ej: A123456789">
-            </div>
-            <div class="form-group">
-                <label for="empleo_cuba_espanol">Último Empleo / Historial en Cuba (Español)</label>
-                <input type="text" id="empleo_cuba_espanol" name="empleo_cuba_espanol" placeholder="Ej: Ingeniero Agrónomo">
-            </div>
-        </div>
-
-        <!-- CAMPOS CONDICIONALES PARA TRÁMITE CONSULAR (PASAPORTE CUBANO) -->
-        <div id="seccion_consular" class="conditional-field">
-            <div class="form-group">
-                <label for="pasaporte_actual">Número de Pasaporte Actual *</label>
-                <input type="text" id="pasaporte_actual" name="pasaporte_actual" placeholder="Ej: P123456">
-            </div>
-            <div class="row">
-                <div class="col">
-                    <div class="form-group">
-                        <label for="provincia_cuba">Provincia de Origen en Cuba *</label>
-                        <input type="text" id="provincia_cuba" name="provincia_cuba" placeholder="Ej: La Habana">
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="form-group">
-                        <label for="ano_salida_cuba">Año de Salida de Cuba *</label>
-                        <input type="text" id="ano_salida_cuba" name="ano_salida_cuba" placeholder="Ej: 2021">
-                    </div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="empleo_cuba_espanol_pasaporte">Último Empleo u Oficio en Cuba *</label>
-                <input type="text" id="empleo_cuba_espanol_pasaporte" name="empleo_cuba_espanol_pasaporte" placeholder="Ej: Profesor">
-            </div>
-        </div>
-
-        <button type="submit">Generar Trámite en SAVE CUBA</button>
-    </form>
-
-    <div id="resultado"></div>
+    <!-- PANTALLA ÉXITO -->
+    <div id="paso-exito" class="card-blanca seccion-paso">
+        <h3 class="titulo-pantalla" style="color: #4ade80;">¡Todo Listo!</h3>
+        <div id="caja-descarga-dinamica" style="margin-bottom: 25px;"></div>
+        <button class="btn-atras" onclick="location.reload()">INICIAR OTRO SERVICIO</button>
+    </div>
 </div>
+
 <script>
-    function cambiarFlujoTrámite() {
-        const tipo = document.getElementById('tramite_tipo').value;
-        const secUscis = document.getElementById('seccion_uscis');
-        const secConsular = document.getElementById('seccion_consular');
+    const API_BASE_URL = 'https://save-cuba.onrender.com';
+    let tramiteSeleccionado = "";
+    let contadorClicksSecretos = 0;
 
-        // Ocultar ambos por defecto
-        secUscis.style.display = 'none';
-        secConsular.style.display = 'none';
-
-        // Mostrar según la selección
-        if (tipo === 'paquete_completo_uscis' || tipo === 'naturalizacion_n400') {
-            secUscis.style.display = 'block';
-        } else if (tipo === 'pasaporte_cubano') {
-            secConsular.style.display = 'block';
+    function registrarClickSecreto() {
+        if (++contadorClicksSecretos === 3) {
+            document.getElementById("bloque-secreto-dev").classList.remove("paso-oculto");
+            contadorClicksSecretos = 0;
         }
     }
 
-    document.getElementById('tramiteForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const resultadoDiv = document.getElementById('resultado');
-        resultadoDiv.style.color = '#2563eb';
-        resultadoDiv.innerText = 'Procesando trámite en SAVE CUBA, por favor espere...';
+    function despertarServidorYContinuar() {
+        document.getElementById("paso-bienvenida").classList.remove("activo");
+        document.getElementById("pantalla-inicio").classList.add("activo");
+    }
 
-        const tipo = document.getElementById('tramite_tipo').value;
+    function irAlFormulario(tipo) {
+        tramiteSeleccionado = tipo;
+        document.getElementById("pantalla-inicio").classList.remove("activo");
+        document.getElementById("paso-formulario").classList.add("activo");
+        adaptarCamposFormulario();
+    }
+
+    function regresarAlMenuServicios() {
+        document.getElementById("paso-formulario").classList.remove("activo");
+        document.getElementById("pantalla-inicio").classList.add("activo");
+    }
+
+    function guardarDatoLocal(c, v) { localStorage.setItem(c, v); }
+
+    function adaptarCamposFormulario() {
+        const bFederal = document.getElementById("bloque-federal");
+        const bConsular = document.getElementById("bloque-consular");
+        const titulo = document.getElementById("titulo-servicio");
         
-        // Unificar el campo de empleo según el flujo activo
-        let empleoFinal = "";
-        if (tipo === 'paquete_completo_uscis' || tipo === 'naturalizacion_n400') {
-            empleoFinal = document.getElementById('empleo_cuba_espanol').value;
-        } else if (tipo === 'pasaporte_cubano') {
-            empleoFinal = document.getElementById('empleo_cuba_espanol_pasaporte').value;
+        if (tramiteSeleccionado === "pasaporte_cubano") {
+            titulo.innerText = "🇨🇺 Trámite: Pasaporte Cubano";
+            bFederal.style.display = "none";
+            bConsular.style.display = "block";
+        } else {
+            titulo.innerText = tramiteSeleccionado === "paquete_completo_uscis" ? "🇺🇸 Residencia Americana" : "⭐ Ciudadanía Americana";
+            bFederal.style.display = "block";
+            bConsular.style.display = "none";
         }
+    }
 
-        const datos = {
-            primer_nombre: document.getElementById('primer_nombre').value,
-            segundo_nombre: document.getElementById('segundo_nombre').value,
-            primer_apellido: document.getElementById('primer_apellido').value,
-            segundo_apellido: document.getElementById('segundo_apellido').value,
-            fecha_nacimiento: document.getElementById('fecha_nacimiento').value,
-            anumber: document.getElementById('anumber').value || "",
-            pasaporte_actual: document.getElementById('pasaporte_actual').value || "",
-            provincia_cuba: document.getElementById('provincia_cuba').value || "",
-            ano_salida_cuba: document.getElementById('ano_salida_cuba').value || "",
-            empleo_cuba_espanol: empleoFinal,
-            tramite_tipo: tipo
+    async function solicitarCheckoutStripe() {
+        const payload = prepararPayload();
+        const res = await fetch(`${API_BASE_URL}/api/stripe/checkout`, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (res.ok) window.location.href = data.stripe_checkout_url;
+        else alert("Error: " + data.detail);
+    }
+
+    function prepararPayload() {
+        return {
+            tramite_tipo: tramiteSeleccionado,
+            primer_nombre: document.getElementById("sc_nombre1").value,
+            segundo_nombre: document.getElementById("sc_nombre2").value,
+            primer_apellido: document.getElementById("sc_apellido1").value,
+            segundo_apellido: document.getElementById("sc_apellido2").value,
+            fecha_nacimiento: document.getElementById("sc_fecha_nacimiento").value,
+            empleo_cuba_espanol: document.getElementById("sc_empleo_cuba").value,
+            anumber: document.getElementById("sc_anumber").value,
+            pasaporte_actual: document.getElementById("sc_pasaporte_num").value,
+            provincia_cuba: document.getElementById("sc_provincia").value,
+            ano_salida_cuba: document.getElementById("sc_ano_salida").value
         };
-
-        try {
-            const response = await fetch('/procesar_tramite', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datos)
-            });
-
-            const resultado = await response.json();
-
-            if (response.ok) {
-                resultadoDiv.style.color = '#16a34a';
-                resultadoDiv.innerHTML = `¡Éxito! Documento generado correctamente por SAVE CUBA.<br><a href="/salidas/${resultado.archivo}" target="_blank" style="color: #2563eb; font-weight: bold; text-decoration: underline;">Descargar PDF del Trámite</a>`;
-            } else {
-                resultadoDiv.style.color = '#dc2626';
-                resultadoDiv.innerText = 'Error: ' + (resultado.detail || 'Ocurrió un fallo en el sistema.');
-            }
-        } catch (error) {
-            resultadoDiv.style.color = '#dc2626';
-            resultadoDiv.innerText = 'Error de conexión con el servidor.';
-        }
-    });
+    }
 </script>
-
 </body>
-</html>    
+</html>
