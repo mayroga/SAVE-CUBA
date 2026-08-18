@@ -373,21 +373,26 @@
     }
 
     function adaptarCamposFormulario() {
+        tramiteSeleccionado = document.getElementById("sc_tipo_tramite").value;
         const bFederal = document.getElementById("bloque-federal");
         const bConsular = document.getElementById("bloque-consular");
         const titulo = document.getElementById("titulo-servicio");
+
+        // Forzar a que la caja de empleo siempre esté visible en la pantalla
+        document.getElementById("sc_empleo_cuba").style.display = "block";
+
         if (tramiteSeleccionado === "pasaporte_cubano") {
             titulo.innerText = "🇨🇺 Trámite: Pasaporte Cubano";
-            bFederal.style.display = "none";
-            bConsular.style.display = "block";
+            bFederal.style.display = "none";     // Esconde el Alien Number
+            bConsular.style.display = "block";    // Muestra Provincia, Año y Número de Pasaporte
         } else if (tramiteSeleccionado === "paquete_completo_uscis") {
             titulo.innerText = "🇺🇸 Trámite: Residencia Americana";
-            bFederal.style.display = "block";
-            bConsular.style.display = "none";
+            bFederal.style.display = "block";    // Muestra el Alien Number
+            bConsular.style.display = "none";    // Esconde los datos de Cuba
         } else if (tramiteSeleccionado === "naturalizacion_n400") {
             titulo.innerText = "⭐ Trámite: Ciudadanía Americana";
-            bFederal.style.display = "block";
-            bConsular.style.display = "none";
+            bFederal.style.display = "block";    // Muestra el Alien Number
+            bConsular.style.display = "none";    // Esconde los datos de Cuba
         }
     }
 
@@ -396,24 +401,19 @@
         const btn = document.getElementById("btnPagar");
         btn.innerText = "Abriendo pasarela de pago seguro...";
         btn.disabled = true;
-
         const payload = prepararPayload();
-
         try {
             const response = await fetch(`${API_BASE_URL}/api/stripe/checkout`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
-
             if (!response.ok) {
                 const err = await response.json();
                 throw new Error(err.detail || "Revisa las casillas obligatorias.");
             }
-
             const data = await response.json();
             window.location.href = data.stripe_checkout_url;
-
         } catch (error) {
             alert("❌ Alerta del Sistema: " + error.message);
             btn.innerText = "💳 PROCESAR Y PAGAR MI TRÁMITE";
@@ -421,33 +421,26 @@
         }
     }
 
-    // FLUJO EXCLUSIVO DE DESARROLLADOR: SALTA EL PAGO USANDO TU CONTRASEÑA DE RENDER
+    // FLUJO EXCLUSIVO DE DESARROLLADOR: SALTA EL PAGO CON TU CONTRASEÑA DE RENDER
     async function solicitarProcesamientoGratisDev() {
         const btn = document.getElementById("btnPruebaGratis");
         btn.innerText = "Validando credenciales de pruebas...";
         btn.disabled = true;
-
         const payload = prepararPayload();
-        
-        // Adjuntamos tus llaves ocultas pasadas desde el input secreto de la interfaz
         payload.dev_username_input = document.getElementById("dev_user").value;
         payload.dev_password_input = document.getElementById("dev_pass").value;
-
         try {
             const response = await fetch(`${API_BASE_URL}/api/asistente/gratis-dev`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
-
             if (!response.ok) {
                 const err = await response.json();
                 throw new Error(err.detail || "Credenciales incorrectas.");
             }
-
             const data = await response.json();
             
-            // Simular el retorno exitoso de descarga instantánea sin pasar por Stripe
             document.getElementById("paso-formulario").classList.remove("activo");
             document.getElementById("paso-exito").classList.add("activo");
             document.getElementById("caja-descarga-dinamica").innerHTML = `
@@ -456,7 +449,6 @@
                 </a>
             `;
             document.getElementById("paso-exito").scrollIntoView({ behavior: 'smooth' });
-
         } catch (error) {
             alert("❌ Denegado: " + error.message);
             btn.innerText = "🚀 VALIDAR CREDENCIALES Y GENERAR GRATIS";
@@ -464,7 +456,7 @@
         }
     }
 
-    // ¡CORREGIDO AQUÍ! Se cambió 'def' por 'function' para que el navegador lo entienda
+    // REVISIÓN EXPERTA: Sincroniza y envía los valores correctos de forma limpia
     function prepararPayload() {
         return {
             tramite_tipo: tramiteSeleccionado,
@@ -473,11 +465,11 @@
             primer_apellido: document.getElementById("sc_apellido1").value,
             segundo_apellido: document.getElementById("sc_apellido2").value,
             fecha_nacimiento: document.getElementById("sc_fecha_nacimiento").value,
-            anumber: document.getElementById("sc_anumber").value,
-            empleo_cuba_espanol: document.getElementById("sc_empleo_cuba").value,
-            pasaporte_actual: document.getElementById("sc_pasaporte_num").value,
-            provincia_cuba: document.getElementById("sc_provincia").value,
-            ano_salida_cuba: document.getElementById("sc_ano_salida").value
+            empleo_cuba_espanol: document.getElementById("sc_empleo_cuba").value, // Campo Universal visible
+            anumber: tramiteSeleccionado !== "pasaporte_cubano" ? document.getElementById("sc_anumber").value : "",
+            pasaporte_actual: tramiteSeleccionado === "pasaporte_cubano" ? document.getElementById("sc_pasaporte_num").value : "",
+            provincia_cuba: tramiteSeleccionado === "pasaporte_cubano" ? document.getElementById("sc_provincia").value : "",
+            ano_salida_cuba: tramiteSeleccionado === "pasaporte_cubano" ? document.getElementById("sc_ano_salida").value : ""
         };
     }
 
@@ -486,7 +478,6 @@
         if (urlParams.get('stripe_status') === 'success') {
             document.getElementById("paso-bienvenida").classList.remove("activo");
             document.getElementById("paso-exito").classList.add("activo");
-
             const archivoDescarga = urlParams.get('file') || 'expediente.pdf';
             document.getElementById("caja-descarga-dinamica").innerHTML = `
                 <a href="${API_BASE_URL}/api/descargar/${archivoDescarga}" target="_blank">
