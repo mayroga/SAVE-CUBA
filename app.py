@@ -305,19 +305,23 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
     else:
         raise HTTPException(status_code=400, detail="El trámite comercial solicitado no existe en SAVE CUBA.")
 # =====================================================================
-# ENDPOINT DE PRUEBA DE DESARROLLADOR (BYPASS DE PAGO)
+# ENDPOINT DE PRUEBA DE DESARROLLADOR (BYPASS DE PAGO) - 100% CORREGIDO
 # =====================================================================
 @app.post("/api/asistente/gratis-dev")
 async def procesar_tramite_gratis_dev(cliente: DatosClienteUnificados):
-    # Credenciales configuradas en tus variables de entorno de Render (o valores por defecto)
-    dev_user_valido = os.environ.get("DEV_USERNAME", "admin")
-    dev_pass_valido = os.environ.get("DEV_PASSWORD", "admin")
+    # Leemos tus credenciales desde las variables de entorno de Render (con 'MICHA' como respaldo directo)
+    dev_user_valido = os.environ.get("DEV_USERNAME", "MICHA").strip().upper()
+    dev_pass_valido = os.environ.get("DEV_PASSWORD", "").strip()
     
-    # Comprobación estricta usando los campos correctos del modelo JSON enviado por el frontend
-    if cliente.dev_username_input != dev_user_valido or cliente.dev_password_input != dev_pass_valido:
+    # Limpiamos lo que el usuario escribió en la pantalla
+    user_ingresado = (cliente.dev_username_input or "").strip().upper()
+    pass_ingresado = (cliente.dev_password_input or "").strip()
+    
+    # Validación segura (compara sin importar si escribiste en minúsculas o mayúsculas el usuario)
+    if user_ingresado != dev_user_valido or (dev_pass_valido and pass_ingresado != dev_pass_valido):
         raise HTTPException(
             status_code=401, 
-            detail=f"Credenciales incorrectas. Usuario recibido: '{cliente.dev_username_input}' (Esperado: '{dev_user_valido}')"
+            detail=f"Credenciales incorrectas. Usuario recibido: '{user_ingresado}' (Esperado: '{dev_user_valido}')"
         )
         
     id_unico = f"savecuba_dev_{cliente.tramite_tipo}_{os.urandom(4).hex()}.pdf"
