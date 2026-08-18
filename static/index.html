@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAVE CUBA - Sistema de Asesoría Documental</title>
+    <title>SAVE CUBA - Sistema de Gestión Documental</title>
     <style>
         :root {
             --primary-color: #0f172a;
@@ -103,7 +103,7 @@
 <body>
 
 <div class="container">
-    <h2>SAVE CUBA - Gestión de Trámites</h2>
+    <h2>SAVE CUBA - Trámites y Planillas</h2>
     <form id="tramiteForm">
         
         <div class="form-group">
@@ -150,7 +150,7 @@
             <label for="fecha_nacimiento">Fecha de Nacimiento *</label>
             <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" required>
         </div>
- <!-- CAMPOS CONDICIONALES PARA USCIS (RESIDENCIA / CIUDADANÍA) -->
+<!-- CAMPOS CONDICIONALES PARA USCIS (RESIDENCIA / CIUDADANÍA) -->
         <div id="seccion_uscis" class="conditional-field">
             <div class="form-group">
                 <label for="anumber">Número de Registro (A-Number) *</label>
@@ -188,12 +188,11 @@
             </div>
         </div>
 
-        <button type="submit">Generar Trámite Documental</button>
+        <button type="submit">Generar Trámite en SAVE CUBA</button>
     </form>
 
     <div id="resultado"></div>
 </div>
-
 <script>
     function cambiarFlujoTrámite() {
         const tipo = document.getElementById('tramite_tipo').value;
@@ -216,7 +215,7 @@
         e.preventDefault();
         const resultadoDiv = document.getElementById('resultado');
         resultadoDiv.style.color = '#2563eb';
-        resultadoDiv.innerText = 'Procesando trámite, por favor espere...';
+        resultadoDiv.innerText = 'Procesando trámite en SAVE CUBA, por favor espere...';
 
         const tipo = document.getElementById('tramite_tipo').value;
         
@@ -253,7 +252,7 @@
 
             if (response.ok) {
                 resultadoDiv.style.color = '#16a34a';
-                resultadoDiv.innerHTML = `¡Éxito! Documento generado correctamente.<br><a href="/salidas/${resultado.archivo}" target="_blank" style="color: #2563eb; font-weight: bold; text-decoration: underline;">Descargar PDF del Trámite</a>`;
+                resultadoDiv.innerHTML = `¡Éxito! Documento generado correctamente por SAVE CUBA.<br><a href="/salidas/${resultado.archivo}" target="_blank" style="color: #2563eb; font-weight: bold; text-decoration: underline;">Descargar PDF del Trámite</a>`;
             } else {
                 resultadoDiv.style.color = '#dc2626';
                 resultadoDiv.innerText = 'Error: ' + (resultado.detail || 'Ocurrió un fallo en el sistema.');
@@ -266,4 +265,4 @@
 </script>
 
 </body>
-</html>       
+</html>    
