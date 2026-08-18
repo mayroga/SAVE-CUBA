@@ -1,6 +1,6 @@
 import os
 import re
-import shutil
+import unicodedata
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,14 +8,14 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from deep_translator import GoogleTranslator
-from pypdf import PdfReader, PdfWriter
 import google.generativeai as genai
 from openai import OpenAI
+from pypdf import PdfReader, PdfWriter
 import stripe
 
-app = FastAPI(title="SAVE CUBA - Motor Federal de Producción")
+app = FastAPI(title="SAVE CUBA - Motor Federal con Validación Estricta")
 
-# Habilitar CORS para conectar de manera segura con tu index.html
+# Permitir conexiones seguras con el index.html en cualquier dispositivo
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,42 +24,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Inicializar los clientes de IA leyendo de forma segura las variables de entorno de Render
-client_openai = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "temporal_key")) if os.environ.get("OPENAI_API_KEY") else None
-if os.environ.get("GEMINI_API_KEY"):
-    genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-
-# Configurar Stripe como opcional para que Render compile sin dar errores en el primer despliegue
-stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
-STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
-STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE_ID", "")
-
-# Configuración de rutas del servidor
+# Configuración limpia de rutas en el servidor de Render
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PLANTILLAS_DIR = os.path.join(BASE_DIR, "plantillas")
 SALIDAS_DIR = os.path.join(BASE_DIR, "descargas")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
-# Crear directorios automáticamente si no existen
 os.makedirs(SALIDAS_DIR, exist_ok=True)
 
-# Almacén temporal en memoria RAM (Privacidad absoluta, se destruye tras generar el PDF)
-SESIONES_TEMPORALES = {}
+# Clientes de Inteligencia Artificial leyendo tus variables de Render
+client_openai = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "")) if os.environ.get("OPENAI_API_KEY") else None
+if os.environ.get("GEMINI_API_KEY"):
+    genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
-# =====================================================================
-# RUTA MAESTRA: MUESTRA TU INDEX.HTML DE FORMA FIJA EN TU URL DE RENDER
-# =====================================================================
-@app.get("/", response_class=HTMLResponse)
-async def serve_index():
-    ruta_html = os.path.join(STATIC_DIR, "index.html")
-    if not os.path.exists(ruta_html):
-        raise HTTPException(
-            status_code=404, 
-            detail="Error en SAVE CUBA: No se encontró el archivo index.html dentro de la carpeta 'static' en GitHub."
-        )
-    with open(ruta_html, "r", encoding="utf-8") as f:
-        return f.read()
+# Pasarela de Stripe integrada
+stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE_ID", "")
 
+# Estructura del perfil del cliente (JSON que manda la web)
 class DatosClienteUnificados(BaseModel):
     tramite_tipo: str
     primer_nombre: str
@@ -75,107 +58,127 @@ class DatosClienteUnificados(BaseModel):
     dev_username_input: Optional[str] = ""
     dev_password_input: Optional[str] = ""
 
+# Memoria RAM temporal pre-pago
+SESIONES_TEMPORALES = {}
+
 # =====================================================================
-# MOTOR DE INTELIGENCIA ARTIFICIAL Y TRADUCCIÓN CON RESPALDO TRIPLE
+# RUTA MAESTRA DE ENTRADA FIJA EN TU DIRECCIÓN DE RENDER
 # =====================================================================
-def procesar_texto_con_ia_y_respaldo(texto_espanol: str) -> str:
+@app.get("/", response_class=HTMLResponse)
+async def serve_index():
+    ruta_html = os.path.join(STATIC_DIR, "index.html")
+    if not os.path.exists(ruta_html):
+        raise HTTPException(status_code=404, detail="Error de Servidor: No se encontró index.html adentro de static.")
+    with open(ruta_html, "r", encoding="utf-8") as f:
+        return f.read()
+
+# =====================================================================
+# MOTOR INTEGRAL DE AUTO-CORRECCIÓN Y SANEAMIENTO TEXTUAL
+# =====================================================================
+def corregir_y_sanear_texto(texto: Optional[str], es_obligatorio: bool = False, nombre_campo: str = "") -> str:
+    """Elimina tildes, minúsculas, espacios duplicados accidentales y valida vacíos."""
+    if not texto or not texto.strip():
+        if es_obligatorio:
+            raise HTTPException(status_code=400, detail=f"¡Atención! Falta un dato obligatorio: El campo '{nombre_campo}' está vacío.")
+        return ""
+    
+    # Quitar acentos (Ej: Jéz -> JEZ, Muñoz -> MUNOZ)
+    texto_plano = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
+    # Fuerza letras mayúsculas de imprenta y limpia espacios en los extremos
+    texto_plano = texto_plano.upper().strip()
+    # Elimina dobles espacios internos involuntarios
+    return " ".join(texto_plano.split())
+
+# =====================================================================
+# SECCIÓN GUARDIÁN: VALIDACIÓN DE LONGITUD Y ERRORES DE DOCUMENTOS
+# =====================================================================
+
+def validar_y_limpiar_pasaporte(pasaporte_usuario: Optional[str], es_obligatorio: bool = False) -> str:
+    """Verifica de forma estricta que el pasaporte cubano tenga 1 letra y 6 números."""
+    if not pasaporte_usuario or not pasaporte_usuario.strip():
+        if es_obligatorio:
+            raise HTTPException(status_code=400, detail="¡Atención! El número de Pasaporte Cubano es obligatorio para este trámite.")
+        return ""
+        
+    # Limpieza previa: Quitar guiones, espacios o puntos accidentales (Ej: h - 123.456 -> H123456)
+    limpio = re.sub(r'[^A-Z0-9]', '', pasaporte_usuario.strip().upper())
+    
+    # 1. Comprobar si faltan o sobran caracteres en la longitud oficial
+    if len(limpio) != 7:
+        raise HTTPException(
+            status_code=400,
+            detail=f"¡Error en el Pasaporte! Escribiste '{pasaporte_usuario}'. El pasaporte cubano debe tener exactamente 7 caracteres en total (1 letra y 6 números). Revisa si te falta o te sobra algún dígito."
+        )
+        
+    # 2. Comprobar que empiece con una letra y termine en 6 números estrictos
+    if not re.match(r'^[A-Z]\d{6}$', limpio):
+        raise HTTPException(
+            status_code=400,
+            detail=f"¡Estructura de Pasaporte Incorrecta! Escribiste '{pasaporte_usuario}'. Recuerda que debe comenzar obligatoriamente con una Letra seguida de exactamente 6 Números (Ejemplo: H123456)."
+        )
+    return limpio
+
+def validar_y_limpiar_anumber(anumber_usuario: Optional[str], es_obligatorio: bool = False) -> str:
+    """Verifica de forma estricta que el Alien Registration Number tenga exactamente 9 números."""
+    if not anumber_usuario or not anumber_usuario.strip():
+        if es_obligatorio:
+            raise HTTPException(status_code=400, detail="¡Atención! El número de Extranjero (A-Number) es obligatorio para este trámite.")
+        return ""
+        
+    # Limpieza previa: Borrar letras, guiones o espacios (Ej: A - 123 456 789 -> 123456789)
+    limpio = re.sub(r'\D', '', anumber_usuario.strip())
+    
+    # 1. Comprobar si faltan o sobran números en la longitud federal
+    if len(limpio) != 9:
+        raise HTTPException(
+            status_code=400,
+            detail=f"¡Error en el A-Number! El número ingresado tiene {len(limpio)} dígitos. El número de Extranjero (Alien Number) exige exactamente 9 números enteros. Revisa tu documento para corregir los números que faltan o sobran."
+        )
+    return limpio
+
+# =====================================================================
+# TRADUCCIÓN INTELIGENTE EXPERTA CON IA TRIPLE
+# =====================================================================
+def traducir_historial_laboral_ia(texto_espanol: str) -> str:
     if not texto_espanol or not texto_espanol.strip():
         return ""
-
-    prompt_instruccion = f"""
-    Actúa como un preparador de documentos de inmigración experto en Estados Unidos. 
-    Primero, analiza el siguiente texto en español, corrige cualquier error de ortografía, redacción o coherencia. 
-    Luego, tradúcelo a un inglés formal, técnico y legal adecuado para los formularios de USCIS (como el I-485 o I-765). 
-    Devuelve ÚNICAMENTE la traducción final en inglés, en letras MAYÚSCULAS y sin textos aclaratorios.
     
-    Texto a procesar: "{texto_espanol}"
-    """
-
-    # --- MOTOR 1: OpenAI ---
+    prompt = f"""Actúa como un traductor certificado y experto en leyes migratorias de EE. UU. Traduce el siguiente texto laboral al inglés técnico oficial exigido en los formularios de USCIS. Corrige la ortografía y coherencia en español antes de traducir. Devuelve EXCLUSIVAMENTE la traducción final en letras MAYÚSCULAS:\n"{texto_espanol}" """
+    
     if client_openai:
         try:
             response = client_openai.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": prompt_instruccion}],
-                temperature=0.3
+                model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.2
             )
             return response.choices.message.content.strip().upper()
-        except Exception as e:
-            print(f"SAVE CUBA Alerta: Falló OpenAI, usando Gemini. Motivo: {e}")
-
-    # --- MOTOR 2: Gemini ---
+        except Exception:
+            pass
+            
     if os.environ.get("GEMINI_API_KEY"):
         try:
             model = genai.GenerativeModel("gemini-2.5-flash")
-            response = model.generate_content(prompt_instruccion)
+            response = model.generate_content(prompt)
             return response.text.strip().upper()
-        except Exception as e:
-            print(f"SAVE CUBA Alerta: Falló Gemini, usando red de seguridad básica. Motivo: {e}")
-
-    # --- MOTOR 3: Red de seguridad final gratuita ---
+        except Exception:
+            pass
+            
     try:
-        traduccion_basica = GoogleTranslator(source='es', target='en').translate(texto_espanol)
-        return traduccion_basica.strip().upper()
-    except Exception as e:
+        return GoogleTranslator(source='es', target='en').translate(texto_espanol).upper()
+    except Exception:
         return texto_espanol.upper()
-
-# =====================================================================
-# MOTOR DE RECTIFICACIÓN Y COMPROBACIÓN DE ERRORES AUTOMÁTICA
-# =====================================================================
-def rectificar_texto_general(texto: Optional[str], es_obligatorio: bool = False, nombre_campo: str = "") -> str:
-    if not texto or not texto.strip():
-        if es_obligatorio:
-            raise HTTPException(status_code=400, detail=f"Error en SAVE CUBA: El campo '{nombre_campo}' está vacío.")
-        return ""
-    return " ".join(texto.strip().split()).upper()
-
-def rectificar_pasaporte(pasaporte_raw: Optional[str], es_obligatorio: bool = False) -> str:
-    if not pasaporte_raw or not pasaporte_raw.strip():
-        if es_obligatorio:
-            raise HTTPException(status_code=400, detail="Error en SAVE CUBA: El Pasaporte es obligatorio para este trámite.")
-        return ""
-    limpio = re.sub(r'[^A-Z0-9]', '', pasaporte_raw.strip().upper())
-    if not re.match(r'^[A-Z]\d{6}$', limpio):
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Error en SAVE CUBA: Formato de pasaporte '{pasaporte_raw}' inválido. Debe contener exactamente 1 letra y 6 dígitos (Ej: H123456)."
-        )
-    return limpio
-
-def rectificar_anumber(anumber_raw: Optional[str], es_obligatorio: bool = False) -> str:
-    if not anumber_raw or not anumber_raw.strip():
-        if es_obligatorio:
-            raise HTTPException(status_code=400, detail="Error en SAVE CUBA: El número de Extranjero (A-Number) es obligatorio.")
-        return ""
-    limpio = re.sub(r'\D', '', anumber_raw.strip())
-    if len(limpio) != 9:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Error en SAVE CUBA: El A-Number '{anumber_raw}' es incorrecto. Debe tener exactamente 9 dígitos numéricos."
-        )
-    return limpio
-
-def rectificar_tarjeta(numero_tarjeta: Optional[str]) -> str:
-    if not numero_tarjeta:
-        return ""
-    return re.sub(r'\D', '', numero_tarjeta.strip())
-# =====================================================================
-# INYECTOR REAL DE DATOS SOBRE ACROFORMS (PDF)
-# =====================================================================
-
 def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_salida: str) -> str:
     ruta_input = os.path.join(PLANTILLAS_DIR, nombre_plantilla)
     ruta_output = os.path.join(SALIDAS_DIR, nombre_salida)
     
     if not os.path.exists(ruta_input):
-        raise HTTPException(status_code=500, detail=f"Falta archivo base en el servidor: {nombre_plantilla} en la carpeta 'plantillas/'")
+        raise HTTPException(status_code=500, detail=f"Falta archivo base en el servidor: {nombre_plantilla} dentro de 'plantillas/'")
     
     try:
         reader = PdfReader(ruta_input)
         writer = PdfWriter()
         writer.append(reader)
         
-        # Inyección física en los campos interactivos del PDF gubernamental
+        # Escribe los valores limpios directamente en los campos del formulario oficial
         writer.update_page_form_field_values(writer.pages, datos_mapeados)
         
         with open(ruta_output, "wb") as f:
@@ -183,35 +186,47 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
             
         return ruta_output
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al escribir en el PDF {nombre_plantilla}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error mecánico al rellenar el PDF {nombre_plantilla}: {str(e)}")
 
-def ejecutar_mapeo_y_guardado(cliente, id_archivo_salida: str):
-    """Lógica unificada encargada de mapear los datos traducidos sobre las 5 plantillas reales"""
-    nombre1 = rectificar_texto_general(cliente.primer_nombre, es_obligatorio=True, nombre_campo="Primer Nombre")
-    nombre2 = rectificar_texto_general(cliente.segundo_nombre)
-    apellido1 = rectificar_texto_general(cliente.primer_apellido, es_obligatorio=True, nombre_campo="Primer Apellido")
-    apellido2 = rectificar_texto_general(cliente.segundo_apellido)
-    provincia = rectificar_texto_general(cliente.provincia_cuba)
-    
-    pasaporte_rectificado = rectificar_pasaporte(cliente.pasaporte_actual, es_obligatorio=(cliente.tramite_tipo == "pasaporte_cubano"))
-    anumber_rectificado = rectificar_anumber(cliente.anumber, es_obligatorio=(cliente.tramite_tipo in ["paquete_completo_uscis", "naturalizacion_n400"]))
+# =====================================================================
+# MOTOR SEPARADOR Y EJECUTOR DE TRÁMITES COMERCIALES
+# =====================================================================
+
+def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida: str):
+    """
+    Procesa de manera aislada y estricta cada documento público.
+    Utiliza el motor guardián de validación de longitud para evitar errores del usuario.
+    """
+    # 1. Saneamiento e Identidad Limpia (Mayúsculas, sin tildes, sin dobles espacios)
+    nombre1 = corregir_y_sanear_texto(cliente.primer_nombre, es_obligatorio=True, nombre_campo="Primer Nombre")
+    nombre2 = corregir_y_sanear_texto(cliente.segundo_nombre)
+    apellido1 = corregir_y_sanear_texto(cliente.primer_apellido, es_obligatorio=True, nombre_campo="Primer Apellido")
+    apellido2 = corregir_y_sanear_texto(cliente.segundo_apellido)
     
     if not cliente.fecha_nacimiento or "-" not in cliente.fecha_nacimiento:
-        raise HTTPException(status_code=400, detail="Error en SAVE CUBA: La fecha de nacimiento es inválida o está vacía.")
-        
-    ano, mes, dia = cliente.fecha_nacimiento.split("-")
-    fecha_formateada_usa = f"{mes}/{dia}/{ano}"
+        raise HTTPException(status_code=400, detail="¡Atención! La Fecha de Nacimiento es inválida o está vacía.")
     
-    empleo_ingles = procesar_texto_con_ia_y_respaldo(cliente.empleo_cuba_espanol)
+    ano, mes, dia = cliente.fecha_nacimiento.split("-")
+    fecha_usa = f"{mes}/{dia}/{ano}"
 
-    # 1. FLUJO RESIDENCIA Y TRABAJO (USCIS)
+    # -----------------------------------------------------------------
+    # FLUJO A: RESIDENCIA Y PERMISO DE TRABAJO (USCIS - LEY DE AJUSTE)
+    # -----------------------------------------------------------------
     if cliente.tramite_tipo == "paquete_completo_uscis":
-        rellenar_planilla_pdf("plantilla_i485.pdf", {"Given Name": nombre1, "Family Name": apellido1, "A-Number": anumber_rectificado, "Birth Date": fecha_formateada_usa, "Employment History": empleo_ingles}, "temp_i485.pdf")
-        rellenar_planilla_pdf("plantilla_i765.pdf", {"First Name": nombre1, "Last Name": apellido1, "Alien Registration Number": anumber_rectificado}, "temp_i765.pdf")
+        # Guardián: Si tiene un número de más o de menos, el sistema frena aquí y le avisa
+        anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
+        
+        # IA Experta traduce el historial de trabajo al inglés oficial
+        empleo_ingles = traducir_historial_laboral_ia(cliente.empleo_cuba_espanol)
+        
+        # Inyección física sobre los AcroForms
+        rellenar_planilla_pdf("plantilla_i485.pdf", {"Given Name": nombre1, "Middle Name": nombre2, "Family Name": apellido1, "A-Number": anumber_limpio, "Birth Date": fecha_usa, "Employment History": empleo_ingles}, "temp_i485.pdf")
+        rellenar_planilla_pdf("plantilla_i765.pdf", {"First Name": nombre1, "Last Name": apellido1, "Alien Registration Number": anumber_limpio}, "temp_i765.pdf")
         rellenar_planilla_pdf("plantilla_g1450.pdf", {"Given Name": nombre1, "Family Name": apellido1, "Amount": "1440"}, "temp_g1450.pdf")
         
+        # Unión en un solo paquete físico (El pago G-1450 va obligatoriamente arriba de todo)
         pdf_final = PdfWriter()
-        pdf_final.append(os.path.join(SALIDAS_DIR, "temp_g1450.pdf")) # El pago va arriba obligatoriamente
+        pdf_final.append(os.path.join(SALIDAS_DIR, "temp_g1450.pdf"))
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_i485.pdf"))
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_i765.pdf"))
         
@@ -219,8 +234,15 @@ def ejecutar_mapeo_y_guardado(cliente, id_archivo_salida: str):
         with open(ruta_paquete, "wb") as f:
             pdf_final.write(f)
 
-    # 2. FLUJO PASAPORTE CUBANO (CONSULAR)
+    # -----------------------------------------------------------------
+    # FLUJO B: PASAORTE CUBANO (CONSULAR)
+    # -----------------------------------------------------------------
     elif cliente.tramite_tipo == "pasaporte_cubano":
+        # Guardián: Valida estrictamente que sea 1 letra y 6 números sin errores
+        pasaporte_limpio = validar_y_limpiar_pasaporte(cliente.pasaporte_actual, es_obligatorio=True)
+        provincia_limpia = corregir_y_sanear_texto(cliente.provincia_cuba, es_obligatorio=True, nombre_campo="Provincia de Origen")
+        ano_salida_limpio = corregir_y_sanear_texto(cliente.ano_salida_cuba, es_obligatorio=True, nombre_campo="Año de Salida")
+
         campos_pasaporte = {
             "Nombres": f"{nombre1} {nombre2}".strip(),
             "Primer Apellido": apellido1,
@@ -228,15 +250,20 @@ def ejecutar_mapeo_y_guardado(cliente, id_archivo_salida: str):
             "Dia Nacimiento": dia,
             "Mes Nacimiento": mes,
             "Ano Nacimiento": ano,
-            "Numero Pasaporte": pasaporte_rectificado,
-            "Provincia Cuba": provincia,
-            "Ano Salida": cliente.ano_salida_cuba
+            "Numero Pasaporte": pasaporte_limpio,
+            "Provincia Cuba": provincia_limpia,
+            "Ano Salida": ano_salida_limpio
         }
         rellenar_planilla_pdf("plantilla_pasaporte.pdf", campos_pasaporte, id_archivo_salida)
 
-    # 3. FLUJO NATURALIZACIÓN N-400 (CIUDADANÍA)
+    # -----------------------------------------------------------------
+    # FLUJO C: CIUDADANÍA AMERICANA (USCIS - N-400)
+    # -----------------------------------------------------------------
     elif cliente.tramite_tipo == "naturalizacion_n400":
-        rellenar_planilla_pdf("plantilla_n400.pdf", {"Given Name": nombre1, "Family Name": apellido1, "A-Number": anumber_rectificado, "Date of Birth": fecha_formateada_usa}, "temp_n400.pdf")
+        # Guardián: Valida longitud exacta de 9 números enteros
+        anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
+        
+        rellenar_planilla_pdf("plantilla_n400.pdf", {"Given Name": nombre1, "Family Name": apellido1, "A-Number": anumber_limpio, "Date of Birth": fecha_usa}, "temp_n400.pdf")
         rellenar_planilla_pdf("plantilla_g1450.pdf", {"Given Name": nombre1, "Family Name": apellido1, "Amount": "710"}, "temp_g1450.pdf")
         
         pdf_final = PdfWriter()
@@ -246,32 +273,42 @@ def ejecutar_mapeo_y_guardado(cliente, id_archivo_salida: str):
         ruta_paquete = os.path.join(SALIDAS_DIR, id_archivo_salida)
         with open(ruta_paquete, "wb") as f:
             pdf_final.write(f)
+            
+    else:
+        raise HTTPException(status_code=400, detail="El trámite solicitado no existe en el sistema.")
 
 # =====================================================================
-# ENDPOINT DE PRUEBAS GRATIS (SECRETO: CHECKEA TU DEV_USER Y DEV_PASS)
+# ENDPOINT DE DESARROLLO GRATUITO (BLOQUEO TOTAL SI FALTA EN RENDER)
 # =====================================================================
 @app.post("/api/asistente/gratis-dev")
 async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
-    dev_usuario_servidor = os.environ.get("DEV_USER", "admin_save")
-    dev_password_servidor = os.environ.get("DEV_PASS", "cuba_libre_2026")
+    # Lee estrictamente de tus variables guardadas de forma segura en Render
+    dev_usuario_servidor = os.environ.get("DEV_USER")
+    dev_password_servidor = os.environ.get("DEV_PASS")
+    
+    if not dev_usuario_servidor or not dev_password_servidor:
+        raise HTTPException(
+            status_code=503, 
+            detail="Error de Configuración: Las variables DEV_USER y DEV_PASS no han sido añadidas en el panel de Render."
+        )
     
     if cliente.dev_username_input != dev_usuario_servidor or cliente.dev_password_input != dev_password_servidor:
-        raise HTTPException(status_code=401, detail="Credenciales de desarrollo incorrectas. Acceso denegado.")
+        raise HTTPException(status_code=401, detail="Acceso Denegado: Las credenciales de pruebas escritas son incorrectas.")
     
     nombre_archivo = f"prueba_gratis_{cliente.tramite_tipo}.pdf"
     ejecutar_mapeo_y_guardado(cliente, nombre_archivo)
     
     api_url_base = os.environ.get("API_BASE_URL", "http://127.0.0.1:8000")
-    html_respuesta = f"✔ <strong>Modo Desarrollador: Paquete Generado Exitosamente</strong><br>Los datos limpios e inyecciones de prueba se aplicaron correctamente."
+    html_respuesta = "✔ <strong>Filtro Guardián Correcto:</strong> Tus datos fueron corregidos, limpiados de tildes y volcados sobre la plantilla oficial."
     return {"respuesta": html_respuesta, "archivo_url": f"{api_url_base}/api/descargar/{nombre_archivo}"}
 
 # =====================================================================
-# RUTAS DE COBRO DE STRIPE (DORMIDAS HASTA QUE CONFIGURES TUS LLAVES)
+# ENDPOINTS DE PASARELA COMERCIAL STRIPE Y WEBHOOKS
 # =====================================================================
 @app.post("/api/stripe/checkout")
 async def crear_checkout_stripe(cliente: DatosClienteUnificados):
     if not stripe.api_key:
-        raise HTTPException(status_code=503, detail="El sistema de cobros con Stripe no está configurado aún en Render.")
+        raise HTTPException(status_code=503, detail="La pasarela comercial de Stripe no está configurada en Render.")
     
     api_url_base = os.environ.get("API_BASE_URL", "http://127.0.0.1:8000")
     try:
@@ -288,7 +325,7 @@ async def crear_checkout_stripe(cliente: DatosClienteUnificados):
         )
         return {"stripe_checkout_url": checkout_session.url}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error en Stripe: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error en pasarela Stripe: {str(e)}")
 
 @app.post("/api/stripe/webhook")
 async def webhook_stripe(request: Request):
@@ -298,21 +335,20 @@ async def webhook_stripe(request: Request):
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
     except Exception:
-        raise HTTPException(status_code=400, detail="Firma inválida")
+        raise HTTPException(status_code=400, detail="Firma de Webhook inválida")
 
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         id_sesion_local = session.get("metadata", {}).get("id_sesion_local")
-        
-        if id_sesion_local and id_sesion_local in SESIONES_TEMPORALES:
+                if id_sesion_local and id_sesion_local in SESIONES_TEMPORALES:
             datos_cliente = SESIONES_TEMPORALES[id_sesion_local]
             ejecutar_mapeo_y_guardado(datos_cliente, f"{id_sesion_local}.pdf")
-            del SESIONES_TEMPORALES[id_sesion_local] # Privacidad absoluta para el cliente
+            del SESIONES_TEMPORALES[id_sesion_local]  # Destrucción en memoria para privacidad total
 
     return {"status": "success"}
 
 # =====================================================================
-# RUTA DE DESCARGA EN VIVO (Manda el PDF real a la PC o Teléfono)
+# RUTA DE DESCARGA EN VIVO HACIA EL TELÉFONO O COMPUTADORA
 # =====================================================================
 @app.get("/api/descargar/{nombre_archivo}")
 async def descargar_archivo_real(nombre_archivo: str):
@@ -323,7 +359,7 @@ async def descargar_archivo_real(nombre_archivo: str):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "online", "sistema": "SAVE CUBA ready"}
+    return {"status": "online", "sistema": "SAVE CUBA listo"}
 
 if __name__ == "__main__":
     import uvicorn
