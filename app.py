@@ -318,7 +318,7 @@ async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
     # ¡CORREGIDO AQUÍ! Se añade '/api/descargar/' de forma explícita para evitar que la URL se rompa
     return {
         "respuesta": "✔ <strong>Filtro Guardián Correcto:</strong> Tus datos fueron corregidos, limpiados de tildes y volcados sobre la plantilla oficial.",
-        "archivo_url": f"https://save-cuba.onrender.com{nombre_archivo}"
+        "archivo_url": f"https://save-cuba.onrender.com/api/descargar/{nombre_archivo}"
     }
 
 # =====================================================================
