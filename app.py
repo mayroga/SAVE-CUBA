@@ -457,6 +457,26 @@ async def descargar_archivo(nombre_archivo: str):
 if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+# =====================================================================
+# NUEVA FUNCIÓN DE DIAGNÓSTICO PARA LEER LOS CAMPOS REALES DE LOS PDFS
+# =====================================================================
+@app.get("/api/inspeccionar-campos/{nombre_planilla}")
+async def inspeccionar_campos_pdf(nombre_planilla: str):
+    """Lee y lista los nombres exactos de todas las casillas internas de un PDF."""
+    ruta = os.path.join(PLANTILLAS_DIR, f"plantilla_{nombre_planilla}" if not nombre_planilla.startswith("plantilla_") else nombre_planilla)
+    if not os.path.exists(ruta):
+        return {"error": f"No se encontró el archivo en la carpeta plantilla: {ruta}"}
+    
+    reader = PdfReader(ruta)
+    campos = reader.get_fields()
+    
+    if not campos:
+        return {"mensaje": "El PDF no tiene campos interactivos (AcroForms) reconocibles o es un documento plano escaneado."}
+    
+    # Devuelve la lista exacta de nombres de campos que exige este PDF específico
+    return {"total_campos": len(campos), "nombres_exactos_de_casillas": list(campos.keys())}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
