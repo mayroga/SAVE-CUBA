@@ -465,7 +465,8 @@
         }
     }
 
-    def prepararPayload() {
+    // ¡CORREGIDO AQUÍ! Se cambió 'def' por 'function' para que el navegador lo entienda
+    function prepararPayload() {
         return {
             tramite_tipo: tramiteSeleccionado,
             primer_nombre: document.getElementById("sc_nombre1").value,
@@ -496,3 +497,4 @@
             document.getElementById("paso-exito").scrollIntoView({ behavior: 'smooth' });
         }
     });
+</script>
