@@ -4,7 +4,8 @@ import shutil
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from deep_translator import GoogleTranslator
 from pypdf import PdfReader, PdfWriter
@@ -37,12 +38,27 @@ STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE_ID", "")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PLANTILLAS_DIR = os.path.join(BASE_DIR, "plantillas")
 SALIDAS_DIR = os.path.join(BASE_DIR, "descargas")
+STATIC_DIR = os.path.join(BASE_DIR, "static")
 
 # Crear directorios automáticamente si no existen
 os.makedirs(SALIDAS_DIR, exist_ok=True)
 
 # Almacén temporal en memoria RAM (Privacidad absoluta, se destruye tras generar el PDF)
 SESIONES_TEMPORALES = {}
+
+# =====================================================================
+# RUTA MAESTRA: MUESTRA TU INDEX.HTML DE FORMA FIJA EN TU URL DE RENDER
+# =====================================================================
+@app.get("/", response_class=HTMLResponse)
+async def serve_index():
+    ruta_html = os.path.join(STATIC_DIR, "index.html")
+    if not os.path.exists(ruta_html):
+        raise HTTPException(
+            status_code=404, 
+            detail="Error en SAVE CUBA: No se encontró el archivo index.html dentro de la carpeta 'static' en GitHub."
+        )
+    with open(ruta_html, "r", encoding="utf-8") as f:
+        return f.read()
 
 class DatosClienteUnificados(BaseModel):
     tramite_tipo: str
@@ -101,11 +117,11 @@ def procesar_texto_con_ia_y_respaldo(texto_espanol: str) -> str:
         traduccion_basica = GoogleTranslator(source='es', target='en').translate(texto_espanol)
         return traduccion_basica.strip().upper()
     except Exception as e:
-        return texto_espanol.upper() # Retorno de emergencia si todo falla
+        return texto_espanol.upper()
+
 # =====================================================================
 # MOTOR DE RECTIFICACIÓN Y COMPROBACIÓN DE ERRORES AUTOMÁTICA
 # =====================================================================
-
 def rectificar_texto_general(texto: Optional[str], es_obligatorio: bool = False, nombre_campo: str = "") -> str:
     if not texto or not texto.strip():
         if es_obligatorio:
@@ -139,6 +155,10 @@ def rectificar_anumber(anumber_raw: Optional[str], es_obligatorio: bool = False)
         )
     return limpio
 
+def rectificar_tarjeta(numero_tarjeta: Optional[str]) -> str:
+    if not numero_tarjeta:
+        return ""
+    return re.sub(r'\D', '', numero_tarjeta.strip())
 # =====================================================================
 # INYECTOR REAL DE DATOS SOBRE ACROFORMS (PDF)
 # =====================================================================
@@ -176,19 +196,22 @@ def ejecutar_mapeo_y_guardado(cliente, id_archivo_salida: str):
     pasaporte_rectificado = rectificar_pasaporte(cliente.pasaporte_actual, es_obligatorio=(cliente.tramite_tipo == "pasaporte_cubano"))
     anumber_rectificado = rectificar_anumber(cliente.anumber, es_obligatorio=(cliente.tramite_tipo in ["paquete_completo_uscis", "naturalizacion_n400"]))
     
+    if not cliente.fecha_nacimiento or "-" not in cliente.fecha_nacimiento:
+        raise HTTPException(status_code=400, detail="Error en SAVE CUBA: La fecha de nacimiento es inválida o está vacía.")
+        
     ano, mes, dia = cliente.fecha_nacimiento.split("-")
     fecha_formateada_usa = f"{mes}/{dia}/{ano}"
     
     empleo_ingles = procesar_texto_con_ia_y_respaldo(cliente.empleo_cuba_espanol)
 
-    # 1. FLUJO RESIDENCIA Y TRABAJO
+    # 1. FLUJO RESIDENCIA Y TRABAJO (USCIS)
     if cliente.tramite_tipo == "paquete_completo_uscis":
         rellenar_planilla_pdf("plantilla_i485.pdf", {"Given Name": nombre1, "Family Name": apellido1, "A-Number": anumber_rectificado, "Birth Date": fecha_formateada_usa, "Employment History": empleo_ingles}, "temp_i485.pdf")
         rellenar_planilla_pdf("plantilla_i765.pdf", {"First Name": nombre1, "Last Name": apellido1, "Alien Registration Number": anumber_rectificado}, "temp_i765.pdf")
         rellenar_planilla_pdf("plantilla_g1450.pdf", {"Given Name": nombre1, "Family Name": apellido1, "Amount": "1440"}, "temp_g1450.pdf")
         
         pdf_final = PdfWriter()
-        pdf_final.append(os.path.join(SALIDAS_DIR, "temp_g1450.pdf"))
+        pdf_final.append(os.path.join(SALIDAS_DIR, "temp_g1450.pdf")) # El pago va arriba obligatoriamente
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_i485.pdf"))
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_i765.pdf"))
         
@@ -196,7 +219,7 @@ def ejecutar_mapeo_y_guardado(cliente, id_archivo_salida: str):
         with open(ruta_paquete, "wb") as f:
             pdf_final.write(f)
 
-    # 2. FLUJO PASAPORTE CUBANO
+    # 2. FLUJO PASAPORTE CUBANO (CONSULAR)
     elif cliente.tramite_tipo == "pasaporte_cubano":
         campos_pasaporte = {
             "Nombres": f"{nombre1} {nombre2}".strip(),
@@ -211,7 +234,7 @@ def ejecutar_mapeo_y_guardado(cliente, id_archivo_salida: str):
         }
         rellenar_planilla_pdf("plantilla_pasaporte.pdf", campos_pasaporte, id_archivo_salida)
 
-    # 3. FLUJO NATURALIZACIÓN N-400
+    # 3. FLUJO NATURALIZACIÓN N-400 (CIUDADANÍA)
     elif cliente.tramite_tipo == "naturalizacion_n400":
         rellenar_planilla_pdf("plantilla_n400.pdf", {"Given Name": nombre1, "Family Name": apellido1, "A-Number": anumber_rectificado, "Date of Birth": fecha_formateada_usa}, "temp_n400.pdf")
         rellenar_planilla_pdf("plantilla_g1450.pdf", {"Given Name": nombre1, "Family Name": apellido1, "Amount": "710"}, "temp_g1450.pdf")
@@ -239,7 +262,8 @@ async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
     ejecutar_mapeo_y_guardado(cliente, nombre_archivo)
     
     api_url_base = os.environ.get("API_BASE_URL", "http://127.0.0.1:8000")
-    return {"archivo_url": f"{api_url_base}/api/descargar/{nombre_archivo}"}
+    html_respuesta = f"✔ <strong>Modo Desarrollador: Paquete Generado Exitosamente</strong><br>Los datos limpios e inyecciones de prueba se aplicaron correctamente."
+    return {"respuesta": html_respuesta, "archivo_url": f"{api_url_base}/api/descargar/{nombre_archivo}"}
 
 # =====================================================================
 # RUTAS DE COBRO DE STRIPE (DORMIDAS HASTA QUE CONFIGURES TUS LLAVES)
@@ -283,11 +307,12 @@ async def webhook_stripe(request: Request):
         if id_sesion_local and id_sesion_local in SESIONES_TEMPORALES:
             datos_cliente = SESIONES_TEMPORALES[id_sesion_local]
             ejecutar_mapeo_y_guardado(datos_cliente, f"{id_sesion_local}.pdf")
-            del SESIONES_TEMPORALES[id_sesion_local] # Privacidad absoluta
+            del SESIONES_TEMPORALES[id_sesion_local] # Privacidad absoluta para el cliente
 
     return {"status": "success"}
+
 # =====================================================================
-# RUTA DE DESCARGA EN VIVO (Manda el PDF real a la PC del cliente)
+# RUTA DE DESCARGA EN VIVO (Manda el PDF real a la PC o Teléfono)
 # =====================================================================
 @app.get("/api/descargar/{nombre_archivo}")
 async def descargar_archivo_real(nombre_archivo: str):
