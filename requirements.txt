@@ -6,3 +6,4 @@ deep-translator
 openai
 google-generativeai
 stripe
+reportlab
