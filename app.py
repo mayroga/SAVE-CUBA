@@ -201,7 +201,7 @@ def ejecutar_mapeo_y_guardado(cliente: 'DatosClienteUnificados', id_archivo_sali
             pdf_final.write(f)
             
     else:
-        raise HTTPException(status_code=400, detail="El trámite comercial solicitado no existe en AL CIELO.")
+        raise HTTPException(status_code=400, detail="El trámite comercial solicitado no existe en SAVE CUBA.")
 
 # =====================================================================
 # ESTRUCTURA DE DATOS Y ENDPOINT PRINCIPAL
