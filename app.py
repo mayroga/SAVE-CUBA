@@ -309,12 +309,16 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
 # =====================================================================
 @app.post("/api/asistente/gratis-dev")
 async def procesar_tramite_gratis_dev(cliente: DatosClienteUnificados):
-    # Credenciales de acceso rápido interno configuradas en tu entorno de Render
+    # Credenciales configuradas en tus variables de entorno de Render (o valores por defecto)
     dev_user_valido = os.environ.get("DEV_USERNAME", "admin")
     dev_pass_valido = os.environ.get("DEV_PASSWORD", "admin")
     
+    # Comprobación estricta usando los campos correctos del modelo JSON enviado por el frontend
     if cliente.dev_username_input != dev_user_valido or cliente.dev_password_input != dev_pass_valido:
-        raise HTTPException(status_code=401, detail="Credenciales de acceso rápido incorrectas.")
+        raise HTTPException(
+            status_code=401, 
+            detail=f"Credenciales incorrectas. Usuario recibido: '{cliente.dev_username_input}' (Esperado: '{dev_user_valido}')"
+        )
         
     id_unico = f"savecuba_dev_{cliente.tramite_tipo}_{os.urandom(4).hex()}.pdf"
     
@@ -326,7 +330,6 @@ async def procesar_tramite_gratis_dev(cliente: DatosClienteUnificados):
         "mensaje": "Trámite autollenado exitosamente mediante acceso de desarrollador.",
         "archivo_url": f"https://save-cuba.onrender.com/api/descargar/{id_unico}"
     }
-
 # =====================================================================
 # ENDPOINT DE CREACIÓN DE SESIÓN DE PAGO (STRIPE)
 # =====================================================================
