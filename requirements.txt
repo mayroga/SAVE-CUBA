@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+pydantic
+pypdf
+deep-translator
+openai
+google-generativeai
