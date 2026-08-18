@@ -195,7 +195,7 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
         raise HTTPException(status_code=500, detail=f"Error mecánico al rellenar el PDF: {str(e)}")
 
 # =====================================================================
-# MOTOR SEPARADOR Y EJECUTOR DE TRÁMITES (AUTOLLENADO COMPLETO)
+# MOTOR SEPARADOR Y EJECUTOR DE TRÁMITES (AUTOLLENADO COMPLETO Y REAL)
 # =====================================================================
 def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida: str):
     nombre1 = corregir_y_sanear_texto(cliente.primer_nombre, es_obligatorio=True, nombre_campo="Primer Nombre")
@@ -209,42 +209,39 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
     ano, mes, dia = cliente.fecha_nacimiento.split("-")
     fecha_usa = f"{mes}/{dia}/{ano}"
 
-# -----------------------------------------------------------------
-# FLUJO 1: RESIDENCIA Y TRABAJO USA (USCIS - LEY DE AJUSTE)
-# -----------------------------------------------------------------
+    # -----------------------------------------------------------------
+    # FLUJO 1: RESIDENCIA Y TRABAJO USA (USCIS - LEY DE AJUSTE) -> 3 PDFs
+    # -----------------------------------------------------------------
     if cliente.tramite_tipo == "paquete_completo_uscis":
         anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
         empleo_ingles = traducir_historial_laboral_ia(cliente.empleo_cuba_espanol)
 
-        # 1. G-1450 (Authorization for Credit Card Transactions - Monto: $1440)
-        datos_g1450_residencia = {
-            "form1[0].#subform[0].Line1_FullName[0]": f"{nombre1} {apellido1}",
-            "form1[0].#subform[0].GivenName_1[0]": nombre1,
-            "form1[0].#subform[0].FamilyName_1[0]": apellido1,
-            "form1[0].#subform[0].Amount_1[0]": "1440"
-        }
-        rellenar_planilla_pdf("g1450.pdf", datos_g1450_residencia, "temp_g1450.pdf")
+        # 1. G-1450 (Residencia - $1440)
+        rellenar_planilla_pdf("g1450.pdf", {
+            "form1[0].#subform[0].FamilyName[0]": apellido1,
+            "form1[0].#subform[0].GivenName[0]": nombre1,
+            "form1[0].#subform[0].MiddleName[0]": nombre2,
+            "form1[0].#subform[0].AuthorizedPaymentAmt[0]": "1440"
+        }, "temp_g1450.pdf")
 
-        # 2. I-485 (Application to Register Permanent Residence)
-        datos_i485 = {
-            "form1[0].#subform[0].Pt1Line3a_FamilyName[0]": apellido1,
-            "form1[0].#subform[0].Pt1Line3b_GivenName[0]": nombre1,
-            "form1[0].#subform[0].Pt1Line3c_MiddleName[0]": nombre2,
-            "form1[0].#subform[0].AlienRegistrationNumber[0]": anumber_limpio,
-            "form1[0].#subform[0].Pt1Line8_DateOfBirth[0]": fecha_usa,
-            "form1[0].#subform[0].Pt3Line1_RecentEmployer[0]": empleo_ingles
-        }
-        rellenar_planilla_pdf("i485.pdf", datos_i485, "temp_i485.pdf")
+        # 2. I-485 (Residencia Permanente)
+        rellenar_planilla_pdf("i485.pdf", {
+            "form1[0].#subform[0].Page1[0].Pt1Line3a_FamilyName[0]": apellido1,
+            "form1[0].#subform[0].Page1[0].Pt1Line3b_GivenName[0]": nombre1,
+            "form1[0].#subform[0].Page1[0].Pt1Line3c_MiddleName[0]": nombre2,
+            "form1[0].#subform[0].Page1[0].AlienRegistrationNumber[0]": anumber_limpio,
+            "form1[0].#subform[0].Page1[0].Pt1Line8_DateOfBirth[0]": fecha_usa,
+            "form1[0].#subform[0].Page3[0].Pt3Line1_RecentEmployer[0]": empleo_ingles
+        }, "temp_i485.pdf")
 
-        # 3. I-765 (Application for Employment Authorization)
-        datos_i765 = {
-            "form1[0].#subform[0].FamilyName_1[0]": apellido1,
-            "form1[0].#subform[0].GivenName_1[0]": nombre1,
-            "form1[0].#subform[0].AlienRegistrationNumber_1[0]": anumber_limpio
-        }
-        rellenar_planilla_pdf("i765.pdf", datos_i765, "temp_i765.pdf")
+        # 3. I-765 (Permiso de Trabajo)
+        rellenar_planilla_pdf("i765.pdf", {
+            "form1[0].Page1[0].Line1a_FamilyName[0]": apellido1,
+            "form1[0].Page1[0].Line1b_GivenName[0]": nombre1,
+            "form1[0].Page1[0].Line1c_MiddleName[0]": nombre2,
+            "form1[0].Page2[0].AlienRegistrationNumber[0]": anumber_limpio
+        }, "temp_i765.pdf")
         
-        # Ensamblaje final del paquete completo de Residencia
         pdf_final = PdfWriter()
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_g1450.pdf"))
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_i485.pdf"))
@@ -255,58 +252,58 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
             pdf_final.write(f)
 
     # -----------------------------------------------------------------
-    # FLUJO 2: TRÁMITE CONSULAR (PASAPORTE CUBANO)
+    # FLUJO 2: TRÁMITE CONSULAR (PASAPORTE CUBANO) -> 1 PDF EN ESPAÑOL
     # -----------------------------------------------------------------
     elif cliente.tramite_tipo == "pasaporte_cubano":
         pasaporte_limpio = validar_y_limpiar_pasaporte(cliente.pasaporte_actual, es_obligatorio=True)
         provincia_limpia = corregir_y_sanear_texto(cliente.provincia_cuba, es_obligatorio=True, nombre_campo="Provincia de Origen")
         ano_salida_limpio = corregir_y_sanear_texto(cliente.ano_salida_cuba, es_obligatorio=True, nombre_campo="Año de Salida")
-        empleo_espanol_limpio = corregir_y_sanear_texto(cliente.empleo_cuba_espanol, es_obligatorio=True, nombre_campo="Último empleo o estudios en Cuba")
+        
+        empleo_espanol_limpio = corregir_y_sanear_texto(
+            cliente.empleo_cuba_espanol, 
+            es_obligatorio=True, 
+            nombre_campo="Último empleo o estudios en Cuba"
+        )
 
         campos_pasaporte = {
-            "Nombres": f"{nombre1} {nombre2}".strip(),
-            "Primer Apellido": apellido1,
-            "Segundo Apellido": apellido2,
-            "Dia Nacimiento": dia,
-            "Mes Nacimiento": mes,
-            "Ano Nacimiento": ano,
-            "Numero Pasaporte": pasaporte_limpio,
-            "Provincia Cuba": provincia_limpia,
-            "Ano Salida": ano_salida_limpio,
-            "Empleo Cuba": empleo_espanol_limpio,
-            # Marcas de control consular en X
-            "Prórroga": "Off",
-            "Renovación": "Off",
-            "Primera Vez": "Off"
+            "Primer nombre": nombre1,
+            "Segundo nombre": nombre2,
+            "Primer apellido": apellido1,
+            "Segundo apellido": apellido2,
+            "DíaRow1": dia,
+            "MesRow1": mes,
+            "AñoRow1": ano,
+            "Número de Pasaporte": pasaporte_limpio,
+            "Provincia": provincia_limpia,
+            "AñoRow": ano_salida_limpio,
+            "Profesión u oficio": empleo_espanol_limpio
         }
         
         rellenar_planilla_pdf("pasaporte.pdf", campos_pasaporte, id_archivo_salida)
 
     # -----------------------------------------------------------------
-    # FLUJO 3: CIUDADANÍA AMERICANA (USCIS - N-400)
+    # FLUJO 3: CIUDADANÍA AMERICANA (USCIS - N-400) -> 2 PDFs
     # -----------------------------------------------------------------
     elif cliente.tramite_tipo == "naturalizacion_n400":
         anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
         
-        # 1. G-1450 (Authorization for Credit Card Transactions - Monto: $710)
-        datos_g1450_ciudadania = {
-            "form1[0].#subform[0].Line1_FullName[0]": f"{nombre1} {apellido1}",
-            "form1[0].#subform[0].GivenName_1[0]": nombre1,
-            "form1[0].#subform[0].FamilyName_1[0]": apellido1,
-            "form1[0].#subform[0].Amount_1[0]": "710"
-        }
-        rellenar_planilla_pdf("g1450.pdf", datos_g1450_ciudadania, "temp_g1450.pdf")
+        # 1. G-1450 (Ciudadanía - $710)
+        rellenar_planilla_pdf("g1450.pdf", {
+            "form1[0].#subform[0].FamilyName[0]": apellido1,
+            "form1[0].#subform[0].GivenName[0]": nombre1,
+            "form1[0].#subform[0].MiddleName[0]": nombre2,
+            "form1[0].#subform[0].AuthorizedPaymentAmt[0]": "710"
+        }, "temp_g1450.pdf")
 
-        # 2. N-400 (Application for Naturalization)
-        datos_n400 = {
-            "form1[0].#subform[0].Pt1Line3a_FamilyName[0]": apellido1,
-            "form1[0].#subform[0].Pt1Line3b_GivenName[0]": nombre1,
-            "form1[0].#subform[0].AlienRegistrationNumber[0]": anumber_limpio,
-            "form1[0].#subform[0].Pt1Line8_DateOfBirth[0]": fecha_usa
-        }
-        rellenar_planilla_pdf("n400.pdf", datos_n400, "temp_n400.pdf")
+        # 2. N-400 (Naturalización)
+        rellenar_planilla_pdf("n400.pdf", {
+            "form1[0].#subform[0].P2_Line1_FamilyName[0]": apellido1,
+            "form1[0].#subform[0].P2_Line1_GivenName[0]": nombre1,
+            "form1[0].#subform[0].P2_Line1_MiddleName[0]": nombre2,
+            "form1[0].#subform[1].#area[1].Line1_AlienNumber[1]": anumber_limpio,
+            "form1[0].#subform[1].P2_Line8_DateOfBirth[0]": fecha_usa
+        }, "temp_n400.pdf")
         
-        # Ensamblaje final del paquete de Naturalización
         pdf_final = PdfWriter()
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_g1450.pdf"))
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_n400.pdf"))
@@ -314,6 +311,9 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
         ruta_paquete = os.path.join(SALIDAS_DIR, id_archivo_salida)
         with open(ruta_paquete, "wb") as f:
             pdf_final.write(f)
+            
+    else:
+        raise HTTPException(status_code=400, detail="El trámite comercial solicitado no existe en SAVE CUBA.")
 # =====================================================================
 # ENDPOINT DE PRUEBA DE DESARROLLADOR (BYPASS DE PAGO) - 100% CORREGIDO
 # =====================================================================
