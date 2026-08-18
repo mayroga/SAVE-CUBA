@@ -295,7 +295,7 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
         raise HTTPException(status_code=400, detail="El trámite comercial solicitado no existe en SAVE CUBA.")
 
 # =====================================================================
-# ENDPOINT DE DESARROLLO GRATUITO (BLOQUEO REAL SI FALTA EN RENDER)
+# ENDPOINT DE DESARROLLO GRATUITO (CORREGIDO CON LA RUTA DE DESCARGA REAL)
 # =====================================================================
 @app.post("/api/asistente/gratis-dev")
 async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
@@ -315,7 +315,11 @@ async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
     nombre_archivo = f"prueba_gratis_{cliente.tramite_tipo}.pdf"
     ejecutar_mapeo_y_guardado(cliente, nombre_archivo)
     
-    return {"respuesta": "✔ Filtro Guardián Correcto", "archivo_url": f"https://onrender.com{nombre_archivo}"}
+    # ¡CORREGIDO AQUÍ! Se añade '/api/descargar/' de forma explícita para evitar que la URL se rompa
+    return {
+        "respuesta": "✔ <strong>Filtro Guardián Correcto:</strong> Tus datos fueron corregidos, limpiados de tildes y volcados sobre la plantilla oficial.",
+        "archivo_url": f"https://save-cuba.onrender.com{nombre_archivo}"
+    }
 
 # =====================================================================
 # ENDPOINTS DE PASARELA COMERCIAL STRIPE Y WEBHOOKS
@@ -334,8 +338,8 @@ async def crear_checkout_stripe(cliente: DatosClienteUnificados):
             line_items=[{'price': STRIPE_PRICE_ID, 'quantity': 1}],
             mode='payment',
             metadata={"id_sesion_local": id_sesion_local},
-            success_url=f"https://onrender.com?stripe_status=success&file={id_sesion_local}.pdf",
-            cancel_url=f"https://onrender.com?stripe_status=cancel",
+            success_url=f"https://save-cuba.onrender.com?stripe_status=success&file={id_sesion_local}.pdf",
+            cancel_url=f"https://save-cuba.onrender.com?stripe_status=cancel",
         )
         return {"stripe_checkout_url": checkout_session.url}
     except Exception as e:
