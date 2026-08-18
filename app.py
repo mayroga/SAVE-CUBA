@@ -26,7 +26,7 @@ app.add_middleware(
 
 # Configuración limpia de rutas en el servidor de Render
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PLANTILLAS_DIR = os.path.join(BASE_DIR, "plantilla")
+PLANTILLAS_DIR = os.path.join(BASE_DIR, "plantilla")  # Carpeta en singular 'plantilla'
 SALIDAS_DIR = os.path.join(BASE_DIR, "descargas")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
@@ -82,7 +82,7 @@ def corregir_y_sanear_texto(texto: Optional[str], es_obligatorio: bool = False, 
             raise HTTPException(status_code=400, detail=f"¡Atención! Falta un dato obligatorio: El campo '{nombre_campo}' está vacío.")
         return ""
     
-    # Quitar acentos (Ej: Jéz -> JEZ, Muñoz -> MUNOZ)
+    # Quitar acentos (Ej: Pérez -> PEREZ, Muñoz -> MUNOZ)
     texto_plano = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
     # Fuerza letras mayúsculas de imprenta y limpia espacios en los extremos
     texto_plano = texto_plano.upper().strip()
@@ -92,7 +92,6 @@ def corregir_y_sanear_texto(texto: Optional[str], es_obligatorio: bool = False, 
 # =====================================================================
 # SECCIÓN GUARDIÁN: VALIDACIÓN DE LONGITUD Y ERRORES DE DOCUMENTOS
 # =====================================================================
-
 def validar_y_limpiar_pasaporte(pasaporte_usuario: Optional[str], es_obligatorio: bool = False) -> str:
     """Verifica de forma estricta que el pasaporte cubano tenga 1 letra y 6 números."""
     if not pasaporte_usuario or not pasaporte_usuario.strip():
@@ -100,17 +99,14 @@ def validar_y_limpiar_pasaporte(pasaporte_usuario: Optional[str], es_obligatorio
             raise HTTPException(status_code=400, detail="¡Atención! El número de Pasaporte Cubano es obligatorio para este trámite.")
         return ""
         
-    # Limpieza previa: Quitar guiones, espacios o puntos accidentales (Ej: h - 123.456 -> H123456)
     limpio = re.sub(r'[^A-Z0-9]', '', pasaporte_usuario.strip().upper())
     
-    # 1. Comprobar si faltan o sobran caracteres en la longitud oficial
     if len(limpio) != 7:
         raise HTTPException(
             status_code=400,
             detail=f"¡Error en el Pasaporte! Escribiste '{pasaporte_usuario}'. El pasaporte cubano debe tener exactamente 7 caracteres en total (1 letra y 6 números). Revisa si te falta o te sobra algún dígito."
         )
         
-    # 2. Comprobar que empiece con una letra y termine en 6 números estrictos
     if not re.match(r'^[A-Z]\d{6}$', limpio):
         raise HTTPException(
             status_code=400,
@@ -125,10 +121,8 @@ def validar_y_limpiar_anumber(anumber_usuario: Optional[str], es_obligatorio: bo
             raise HTTPException(status_code=400, detail="¡Atención! El número de Extranjero (A-Number) es obligatorio para este trámite.")
         return ""
         
-    # Limpieza previa: Borrar letras, guiones o espacios (Ej: A - 123 456 789 -> 123456789)
     limpio = re.sub(r'\D', '', anumber_usuario.strip())
     
-    # 1. Comprobar si faltan o sobran números en la longitud federal
     if len(limpio) != 9:
         raise HTTPException(
             status_code=400,
@@ -166,28 +160,33 @@ def traducir_historial_laboral_ia(texto_espanol: str) -> str:
         return GoogleTranslator(source='es', target='en').translate(texto_espanol).upper()
     except Exception:
         return texto_espanol.upper()
-        
+# =====================================================================
+# INYECTOR MECÁNICO DE ARCHIVOS PDF (ACROFORMS)
+# =====================================================================
+
 def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_salida: str) -> str:
-    # 1. Fuerza al sistema a ponerle "plantilla_" antes del nombre (Ej: i485.pdf -> plantilla_i485.pdf)
-    nombre_con_prefijo = f"plantilla_{nombre_plantilla}"
-    
-    # 2. Busca dentro de PLANTILLAS_DIR (que apunta a tu carpeta en singular 'plantilla')
+    # Si el nombre ya empieza con "plantilla_", lo deja igual. Si no, se lo agrega.
+    if nombre_plantilla.startswith("plantilla_"):
+        nombre_con_prefijo = nombre_plantilla
+    else:
+        nombre_con_prefijo = f"plantilla_{nombre_plantilla}"
+        
     ruta_input = os.path.join(PLANTILLAS_DIR, nombre_con_prefijo)
     ruta_output = os.path.join(SALIDAS_DIR, nombre_salida)
     
-    # 3. Alerta de seguridad corregida con el nombre y la carpeta real
+    # Mensaje de alerta limpio con la ruta exacta de tu servidor
     if not os.path.exists(ruta_input):
         raise HTTPException(
             status_code=500, 
             detail=f"Falta archivo base en el servidor: {nombre_con_prefijo} dentro de la carpeta 'plantilla/'"
         )
-        
+    
     try:
         reader = PdfReader(ruta_input)
         writer = PdfWriter()
         writer.append(reader)
         
-        # Inyección mecánica sobre los campos interactivos
+        # Inyección mecánica sobre las casillas oficiales del gobierno
         writer.update_page_form_field_values(writer.pages, datos_mapeados)
         
         with open(ruta_output, "wb") as f:
@@ -203,10 +202,9 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
 
 def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida: str):
     """
-    Procesa de manera aislada y estricta cada documento público.
-    Utiliza el motor guardián de validación de longitud para evitar errores del usuario.
+    Procesa de manera aislada cada documento público.
+    Utiliza nombres base limpios de forma uniforme para todas las planillas.
     """
-    # 1. Saneamiento e Identidad Limpia (Mayúsculas, sin tildes, sin dobles espacios)
     nombre1 = corregir_y_sanear_texto(cliente.primer_nombre, es_obligatorio=True, nombre_campo="Primer Nombre")
     nombre2 = corregir_y_sanear_texto(cliente.segundo_nombre)
     apellido1 = corregir_y_sanear_texto(cliente.primer_apellido, es_obligatorio=True, nombre_campo="Primer Apellido")
@@ -219,21 +217,17 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
     fecha_usa = f"{mes}/{dia}/{ano}"
 
     # -----------------------------------------------------------------
-    # FLUJO A: RESIDENCIA Y PERMISO DE TRABAJO (USCIS - LEY DE AJUSTE)
+    # FLUJO A: RESIDENCIA Y PERMISO DE TRABAJO (USCIS - LEY DE AJUSTE) -> Mapea 3 PDFs
     # -----------------------------------------------------------------
     if cliente.tramite_tipo == "paquete_completo_uscis":
-        # Guardián: Si tiene un número de más o de menos, el sistema frena aquí y le avisa
         anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
-        
-        # IA Experta traduce el historial de trabajo al inglés oficial
         empleo_ingles = traducir_historial_laboral_ia(cliente.empleo_cuba_espanol)
         
-        # Inyección física sobre los AcroForms
-        rellenar_planilla_pdf("plantilla_i485.pdf", {"Given Name": nombre1, "Middle Name": nombre2, "Family Name": apellido1, "A-Number": anumber_limpio, "Birth Date": fecha_usa, "Employment History": empleo_ingles}, "temp_i485.pdf")
-        rellenar_planilla_pdf("plantilla_i765.pdf", {"First Name": nombre1, "Last Name": apellido1, "Alien Registration Number": anumber_limpio}, "temp_i765.pdf")
-        rellenar_planilla_pdf("plantilla_g1450.pdf", {"Given Name": nombre1, "Family Name": apellido1, "Amount": "1440"}, "temp_g1450.pdf")
+        # Inyección uniforme utilizando solo el nombre base del formulario
+        rellenar_planilla_pdf("i485.pdf", {"Given Name": nombre1, "Middle Name": nombre2, "Family Name": apellido1, "A-Number": anumber_limpio, "Birth Date": fecha_usa, "Employment History": empleo_ingles}, "temp_i485.pdf")
+        rellenar_planilla_pdf("i765.pdf", {"First Name": nombre1, "Last Name": apellido1, "Alien Registration Number": anumber_limpio}, "temp_i765.pdf")
+        rellenar_planilla_pdf("g1450.pdf", {"Given Name": nombre1, "Family Name": apellido1, "Amount": "1440"}, "temp_g1450.pdf")
         
-        # Unión en un solo paquete físico (El pago G-1450 va obligatoriamente arriba de todo)
         pdf_final = PdfWriter()
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_g1450.pdf"))
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_i485.pdf"))
@@ -244,10 +238,9 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
             pdf_final.write(f)
 
     # -----------------------------------------------------------------
-    # FLUJO B: PASAORTE CUBANO (CONSULAR)
+    # FLUJO B: TRÁMITE CONSULAR (PASAPORTE CUBANO) -> Mapea 1 PDF
     # -----------------------------------------------------------------
     elif cliente.tramite_tipo == "pasaporte_cubano":
-        # Guardián: Valida estrictamente que sea 1 letra y 6 números sin errores
         pasaporte_limpio = validar_y_limpiar_pasaporte(cliente.pasaporte_actual, es_obligatorio=True)
         provincia_limpia = corregir_y_sanear_texto(cliente.provincia_cuba, es_obligatorio=True, nombre_campo="Provincia de Origen")
         ano_salida_limpio = corregir_y_sanear_texto(cliente.ano_salida_cuba, es_obligatorio=True, nombre_campo="Año de Salida")
@@ -263,17 +256,18 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
             "Provincia Cuba": provincia_limpia,
             "Ano Salida": ano_salida_limpio
         }
-        rellenar_planilla_pdf("plantilla_pasaporte.pdf", campos_pasaporte, id_archivo_salida)
+        # Inyección uniforme utilizando solo el nombre base del formulario
+        rellenar_planilla_pdf("pasaporte.pdf", campos_pasaporte, id_archivo_salida)
 
     # -----------------------------------------------------------------
-    # FLUJO C: CIUDADANÍA AMERICANA (USCIS - N-400)
+    # FLUJO C: CIUDADANÍA AMERICANA (USCIS - N-400) -> Mapea 1 PDF (y reutiliza g1450)
     # -----------------------------------------------------------------
     elif cliente.tramite_tipo == "naturalizacion_n400":
-        # Guardián: Valida longitud exacta de 9 números enteros
         anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
         
-        rellenar_planilla_pdf("plantilla_n400.pdf", {"Given Name": nombre1, "Family Name": apellido1, "A-Number": anumber_limpio, "Date of Birth": fecha_usa}, "temp_n400.pdf")
-        rellenar_planilla_pdf("plantilla_g1450.pdf", {"Given Name": nombre1, "Family Name": apellido1, "Amount": "710"}, "temp_g1450.pdf")
+        # Inyección uniforme utilizando solo el nombre base del formulario
+        rellenar_planilla_pdf("n400.pdf", {"Given Name": nombre1, "Family Name": apellido1, "A-Number": anumber_limpio, "Date of Birth": fecha_usa}, "temp_n400.pdf")
+        rellenar_planilla_pdf("g1450.pdf", {"Given Name": nombre1, "Family Name": apellido1, "Amount": "710"}, "temp_g1450.pdf")
         
         pdf_final = PdfWriter()
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_g1450.pdf"))
@@ -346,14 +340,13 @@ async def webhook_stripe(request: Request):
     except Exception:
         raise HTTPException(status_code=400, detail="Firma de Webhook inválida")
 
-        if event['type'] == 'checkout.session.completed':
-            session = event['data']['object']
-            id_sesion_local = session.get("metadata", {}).get("id_sesion_local")
-            
-            if id_sesion_local and id_sesion_local in SESIONES_TEMPORALES:
-                datos_cliente = SESIONES_TEMPORALES[id_sesion_local]
-                ejecutar_mapeo_y_guardado(datos_cliente, f"{id_sesion_local}.pdf")
-                del SESIONES_TEMPORALES[id_sesion_local]  # Destrucción en memoria para privacidad total
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        id_sesion_local = session.get("metadata", {}).get("id_sesion_local")
+        if id_sesion_local and id_sesion_local in SESIONES_TEMPORALES:
+            datos_cliente = SESIONES_TEMPORALES[id_sesion_local]
+            ejecutar_mapeo_y_guardado(datos_cliente, f"{id_sesion_local}.pdf")
+            del SESIONES_TEMPORALES[id_sesion_local]  # Destrucción en memoria para privacidad total
 
     return {"status": "success"}
 
@@ -375,3 +368,4 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run("app:app", host="0.0.0.0", port=port)
+           
