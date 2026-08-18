@@ -5,3 +5,4 @@ pypdf
 deep-translator
 openai
 google-generativeai
+stripe
