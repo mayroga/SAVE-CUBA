@@ -26,7 +26,7 @@ app.add_middleware(
 
 # Configuración limpia de rutas en el servidor de Render
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PLANTILLAS_DIR = os.path.join(BASE_DIR, "plantillas")
+PLANTILLAS_DIR = os.path.join(BASE_DIR, "plantilla")
 SALIDAS_DIR = os.path.join(BASE_DIR, "descargas")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
@@ -166,19 +166,28 @@ def traducir_historial_laboral_ia(texto_espanol: str) -> str:
         return GoogleTranslator(source='es', target='en').translate(texto_espanol).upper()
     except Exception:
         return texto_espanol.upper()
+        
 def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_salida: str) -> str:
-    ruta_input = os.path.join(PLANTILLAS_DIR, nombre_plantilla)
+    # 1. Fuerza al sistema a ponerle "plantilla_" antes del nombre (Ej: i485.pdf -> plantilla_i485.pdf)
+    nombre_con_prefijo = f"plantilla_{nombre_plantilla}"
+    
+    # 2. Busca dentro de PLANTILLAS_DIR (que apunta a tu carpeta en singular 'plantilla')
+    ruta_input = os.path.join(PLANTILLAS_DIR, nombre_con_prefijo)
     ruta_output = os.path.join(SALIDAS_DIR, nombre_salida)
     
+    # 3. Alerta de seguridad corregida con el nombre y la carpeta real
     if not os.path.exists(ruta_input):
-        raise HTTPException(status_code=500, detail=f"Falta archivo base en el servidor: {nombre_plantilla} dentro de 'plantillas/'")
-    
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Falta archivo base en el servidor: {nombre_con_prefijo} dentro de la carpeta 'plantilla/'"
+        )
+        
     try:
         reader = PdfReader(ruta_input)
         writer = PdfWriter()
         writer.append(reader)
         
-        # Escribe los valores limpios directamente en los campos del formulario oficial
+        # Inyección mecánica sobre los campos interactivos
         writer.update_page_form_field_values(writer.pages, datos_mapeados)
         
         with open(ruta_output, "wb") as f:
@@ -186,7 +195,7 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
             
         return ruta_output
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error mecánico al rellenar el PDF {nombre_plantilla}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error mecánico al rellenar el PDF: {str(e)}")
 
 # =====================================================================
 # MOTOR SEPARADOR Y EJECUTOR DE TRÁMITES COMERCIALES
