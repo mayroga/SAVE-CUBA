@@ -243,16 +243,20 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
             pdf_final.write(f)
 
     # -----------------------------------------------------------------
-    # FLUJO 2: PASAPORTE CUBANO (CONSULAR) -> 1 PDF ÚNICO (¡SIN G-1450 Y EN ESPAÑOL!)
+    # FLUJO 2: TRÁMITE CONSULAR (PASAPORTE CUBANO) -> ¡SIN TRADUCCIÓN Y EN ESPAÑOL!
     # -----------------------------------------------------------------
     elif cliente.tramite_tipo == "pasaporte_cubano":
-        # Guardián: Valida que tenga exactamente 1 letra y 6 números enteros
+        # Guardián estricto de longitud aislada
         pasaporte_limpio = validar_y_limpiar_pasaporte(cliente.pasaporte_actual, es_obligatorio=True)
         provincia_limpia = corregir_y_sanear_texto(cliente.provincia_cuba, es_obligatorio=True, nombre_campo="Provincia de Origen")
         ano_salida_limpio = corregir_y_sanear_texto(cliente.ano_salida_cuba, es_obligatorio=True, nombre_campo="Año de Salida")
         
-        # Saneamiento incondicional: Se limpia la ortografía pero SE MANTIENE EN ESPAÑOL
-        empleo_espanol_limpio = corregir_y_sanear_texto(cliente.empleo_cuba_espanol, es_obligatorio=True, nombre_campo="Último Empleo")
+        # Sincronizado aquí con el nombre exacto de la interfaz visual en español
+        empleo_espanol_limpio = corregir_y_sanear_texto(
+            cliente.empleo_cuba_espanol, 
+            es_obligatorio=True, 
+            nombre_campo="Último empleo o estudios en Cuba"
+        )
 
         campos_pasaporte = {
             "Nombres": f"{nombre1} {nombre2}".strip(),
