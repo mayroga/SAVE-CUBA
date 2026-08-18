@@ -1,28 +1,21 @@
 import os
 import io
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 
-app = FastAPI()
+app = FastAPI(title="SAVE CUBA")
 
-# --- CONFIGURACIÓN DE RUTAS ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PLANTILLA_DIR = os.path.join(BASE_DIR, "plantilla")
 SALIDAS_DIR = os.path.join(BASE_DIR, "salidas")
 
 os.makedirs(SALIDAS_DIR, exist_ok=True)
 
-# =====================================================================
-# MOTOR DE IMPRESIÓN VISUAL POR COORDENADAS (CANVAS OVERLAY)
-# =====================================================================
 def rellenar_planilla_pdf(nombre_pdf_plantilla: str, datos_por_pagina: dict, id_archivo_salida: str):
-    """
-    Dibuja los textos directamente sobre las coordenadas de la página del PDF.
-    datos_por_pagina estructura: { numero_pagina: [(texto, x, y, tamaño), ...] }
-    """
     ruta_plantilla = os.path.join(PLANTILLA_DIR, nombre_pdf_plantilla)
     
     if not os.path.exists(ruta_plantilla):
@@ -55,9 +48,6 @@ def rellenar_planilla_pdf(nombre_pdf_plantilla: str, datos_por_pagina: dict, id_
     with open(ruta_salida, "wb") as f:
         writer.write(f)
 
-# =====================================================================
-# FUNCIONES AUXILIARES DE SANEAMIENTO Y TRADUCCIÓN
-# =====================================================================
 def corregir_y_sanear_texto(texto: str, es_obligatorio: bool = False, nombre_campo: str = "Campo"):
     if not texto and es_obligatorio:
         raise HTTPException(status_code=400, detail=f"El campo {nombre_campo} es obligatorio.")
@@ -78,7 +68,7 @@ def traducir_historial_laboral_ia(texto_espanol: str):
         return "NONE"
     return texto_espanol.upper()
 # =====================================================================
-# MOTOR SEPARADOR Y EJECUTOR DE TRÁMITES (PRECISIÓN EXACTA)
+# MOTOR SEPARADOR Y EJECUTOR DE TRÁMITES
 # =====================================================================
 def ejecutar_mapeo_y_guardado(cliente: 'DatosClienteUnificados', id_archivo_salida: str):
     nombre1 = corregir_y_sanear_texto(cliente.primer_nombre, es_obligatorio=True, nombre_campo="Primer Nombre")
@@ -97,7 +87,6 @@ def ejecutar_mapeo_y_guardado(cliente: 'DatosClienteUnificados', id_archivo_sali
     if cliente.tramite_tipo == "paquete_completo_uscis":
         anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
 
-        # 1. G-1450 (Autorización de Tarjeta de Crédito - $1440)
         datos_g1450 = {
             1: [
                 (apellido1, 72, 685, 10),
@@ -107,7 +96,6 @@ def ejecutar_mapeo_y_guardado(cliente: 'DatosClienteUnificados', id_archivo_sali
         }
         rellenar_planilla_pdf("g1450.pdf", datos_g1450, "temp_g1450.pdf")
 
-        # 2. I-485 (Solicitud de Residencia Permanente)
         datos_i485 = {
             1: [
                 (apellido1, 72, 715, 10),
@@ -120,7 +108,6 @@ def ejecutar_mapeo_y_guardado(cliente: 'DatosClienteUnificados', id_archivo_sali
         }
         rellenar_planilla_pdf("i485.pdf", datos_i485, "temp_i485.pdf")
 
-        # 3. I-765 (Permiso de Trabajo EAD)
         datos_i765 = {
             1: [
                 (apellido1, 72, 725, 10),
@@ -172,7 +159,6 @@ def ejecutar_mapeo_y_guardado(cliente: 'DatosClienteUnificados', id_archivo_sali
     elif cliente.tramite_tipo == "naturalizacion_n400":
         anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
         
-        # 1. G-1450 (Ciudadanía - $710)
         datos_g1450_n400 = {
             1: [
                 (apellido1, 72, 685, 10),
@@ -182,7 +168,6 @@ def ejecutar_mapeo_y_guardado(cliente: 'DatosClienteUnificados', id_archivo_sali
         }
         rellenar_planilla_pdf("g1450.pdf", datos_g1450_n400, "temp_g1450.pdf")
 
-        # 2. N-400 (Solicitud de Naturalización)
         datos_n400 = {
             1: [
                 (apellido1, 72, 715, 10),
@@ -204,7 +189,7 @@ def ejecutar_mapeo_y_guardado(cliente: 'DatosClienteUnificados', id_archivo_sali
         raise HTTPException(status_code=400, detail="El trámite comercial solicitado no existe en SAVE CUBA.")
 
 # =====================================================================
-# ESTRUCTURA DE DATOS Y ENDPOINT PRINCIPAL
+# ESTRUCTURA DE DATOS Y ENDPOINTS DE LA API
 # =====================================================================
 class DatosClienteUnificados(BaseModel):
     primer_nombre: str
@@ -227,11 +212,18 @@ async def procesar_tramite(cliente: DatosClienteUnificados):
         ejecutar_mapeo_y_guardado(cliente, id_archivo_final)
         return {
             "estado": "éxito",
-            "mensaje": "Documento generado correctamente por el sistema.",
+            "mensaje": "Documento generado correctamente por SAVE CUBA.",
             "archivo": id_archivo_final
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error en la generación del PDF: {str(e)}")
+
+@app.get("/salidas/{nombre_archivo}")
+async def descargar_salida(nombre_archivo: str):
+    ruta_archivo = os.path.join(SALIDAS_DIR, nombre_archivo)
+    if os.path.exists(ruta_archivo):
+        return FileResponse(ruta_archivo, media_type='application/pdf', filename=nombre_archivo)
+    raise HTTPException(status_code=404, detail="El archivo PDF solicitado no fue encontrado.")
 
 if __name__ == "__main__":
     import uvicorn
