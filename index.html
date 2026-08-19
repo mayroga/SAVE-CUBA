@@ -13,28 +13,32 @@
         .step.active { display: block; }
         label { display: block; margin-top: 15px; font-weight: bold; font-size: 14px; }
         input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; background: #fff; }
-        .buttons { margin-top: 25px; display: flex; justify-content: space-between; }
-        button { background: #b32134; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; width: 48%; }
+        .buttons { margin-top: 25px; display: flex; justify-content: space-between; gap: 10px; }
+        button { background: #b32134; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; flex: 1; }
+        button.secondary { background: #6c757d; }
         button:hover { opacity: 0.9; }
+        .alert-box { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-size: 13px; font-weight: bold; text-align: center; }
         .loading { text-align: center; font-size: 18px; color: #004080; display: none; margin-top: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Trámite Consular Mexicano</h1>
-    <p class="subtitle">Prepara tu documentación de forma rápida y sin errores</p>
+    <h1>Asistente Consular</h1>
+    <p class="subtitle">Validación y Preparación de Documentos</p>
 
     <div id="formulario">
-        <!-- BLOQUE 1: Selección de Trámite y Nombres -->
+        <!-- BLOQUE 1 -->
         <div class="step active" id="step-1">
+            <div class="alert-box">⚠️ ATENCIÓN: Escriba sin faltas graves. El sistema limpia ortografía automáticamente.</div>
             <label>Seleccione el Trámite:</label>
-            <select id="tipo_tramite">
+            <select id="tipo_tramite" onchange="actualizarEtiquetasExtra()">
                 <option value="pasaporte">Pasaporte Mexicano</option>
                 <option value="matricula">Matrícula Consular</option>
+                <option value="registro">Registro de Nacimiento (Hijos)</option>
             </select>
 
-            <label>Primer Nombre:</label>
+            <label>Primer Nombre (Obligatorio):</label>
             <input type="text" id="primer_nombre" placeholder="Ej. JUAN">
             
             <label>Segundo Nombre (Opcional):</label>
@@ -42,65 +46,143 @@
             
             <div class="buttons">
                 <div></div>
-                <button onclick="siguienteStep(2)">Siguiente</button>
+                <button onclick="validarPaso1()">Siguiente</button>
             </div>
         </div>
 
-        <!-- BLOQUE 2: Apellidos -->
+        <!-- BLOQUE 2 -->
         <div class="step" id="step-2">
-            <label>Apellido Paterno:</label>
+            <label>Apellido Paterno (Obligatorio):</label>
             <input type="text" id="primer_apellido" placeholder="Ej. PÉREZ">
             
             <label>Apellido Materno (Opcional):</label>
             <input type="text" id="segundo_apellido" placeholder="Ej. GÓMEZ">
             
             <div class="buttons">
-                <button style="background:#6c757d" onclick="siguienteStep(1)">Atrás</button>
-                <button onclick="siguienteStep(3)">Siguiente</button>
+                <button class="secondary" onclick="siguienteStep(1)">Atrás</button>
+                <button onclick="validarPaso2()">Siguiente</button>
             </div>
         </div>
 
-        <!-- BLOQUE 3: Nacimiento -->
+        <!-- BLOQUE 3 -->
         <div class="step" id="step-3">
-            <label>Fecha de Nacimiento:</label>
+            <label>Fecha de Nacimiento (Obligatorio):</label>
             <input type="date" id="fecha_nacimiento">
             
-            <label>Estado de Nacimiento en México:</label>
+            <label>Estado o Lugar de Nacimiento (Obligatorio):</label>
             <input type="text" id="lugar_nacimiento" placeholder="Ej. JALISCO">
             
             <div class="buttons">
-                <button style="background:#6c757d" onclick="siguienteStep(2)">Atrás</button>
-                <button onclick="siguienteStep(4)">Siguiente</button>
+                <button class="secondary" onclick="siguienteStep(2)">Atrás</button>
+                <button onclick="validarPaso3()">Siguiente</button>
             </div>
         </div>
 
-        <!-- BLOQUE 4: Contacto en USA -->
+        <!-- BLOQUE 4: Doble Verificación -->
         <div class="step" id="step-4">
-            <label>Dirección Actual en EE. UU.:</label>
+            <div class="alert-box">🚨 ALERTA DE DOBLE VERIFICACIÓN: Revise sus datos antes de generar. Un error impedirá su trámite.</div>
+            
+            <label>Dirección Actual en EE. UU. (Obligatorio):</label>
             <input type="text" id="direccion_usa" placeholder="Ej. 123 MAIN ST, MIAMI FL">
             
-            <label>Teléfono de Contacto:</label>
+            <label>Teléfono de Contacto (Obligatorio):</label>
             <input type="text" id="telefono" placeholder="Ej. 7860000000">
+
+            <div id="seccion-extra" style="display: none;">
+                <label id="label-extra-1">Dato Adicional:</label>
+                <input type="text" id="extra_1" placeholder="">
+                
+                <label id="label-extra-2">Dato Adicional:</label>
+                <input type="text" id="extra_2" placeholder="">
+            </div>
             
             <div class="buttons">
-                <button style="background:#6c757d" onclick="siguienteStep(3)">Atrás</button>
-                <button onclick="enviarDatos()" style="background: #28a745;">Generar Documento</button>
+                <button class="secondary" onclick="siguienteStep(3)">Atrás</button>
+                <button onclick="enviarDatos()" style="background: #28a745;">¡Sí, Todo es Correcto y Generar!</button>
             </div>
         </div>
     </div>
 
     <div class="loading" id="loading-box">
-        <p>Generando formato oficial optimizado...</p>
+        <p>Verificando datos y generando documento blindado...</p>
     </div>
 </div>
 
 <script>
     function siguienteStep(n) {
+        const tipo = document.getElementById('tipo_tramite').value;
+        const seccionExtra = document.getElementById('seccion-extra');
+        
+        if (n === 4) {
+            if (tipo === 'pasaporte') {
+                seccionExtra.style.display = 'none';
+            } else {
+                seccionExtra.style.display = 'block';
+                actualizarEtiquetasExtra();
+            }
+        }
+
         document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
         document.getElementById('step-' + n).classList.add('active');
     }
 
+    function validarPaso1() {
+        const nombre = document.getElementById('primer_nombre').value.trim();
+        if (!nombre) {
+            alert('⚠️ El primer nombre es obligatorio y no puede quedar en blanco.');
+            return;
+        }
+        siguienteStep(2);
+    }
+
+    function validarPaso2() {
+        const apellido = document.getElementById('primer_apellido').value.trim();
+        if (!apellido) {
+            alert('⚠️ El apellido paterno es obligatorio y no puede quedar en blanco.');
+            return;
+        }
+        siguienteStep(3);
+    }
+
+    function validarPaso3() {
+        const fecha = document.getElementById('fecha_nacimiento').value;
+        const lugar = document.getElementById('lugar_nacimiento').value.trim();
+        if (!fecha || !lugar) {
+            alert('⚠️ Debe completar la fecha y el lugar de nacimiento obligatoriamente.');
+            return;
+        }
+        siguienteStep(4);
+    }
+
+    function actualizarEtiquetasExtra() {
+        const tipo = document.getElementById('tipo_tramite').value;
+        const lbl1 = document.getElementById('label-extra-1');
+        const lbl2 = document.getElementById('label-extra-2');
+        const inp1 = document.getElementById('extra_1');
+        const inp2 = document.getElementById('extra_2');
+
+        if (tipo === 'matricula') {
+            lbl1.innerText = "Contacto de Emergencia (Nombre Obligatorio):";
+            inp1.placeholder = "Ej. MARÍA PÉREZ";
+            lbl2.innerText = "Teléfono de Emergencia (Obligatorio):";
+            inp2.placeholder = "Ej. 7861111111";
+        } else if (tipo === 'registro') {
+            lbl1.innerText = "Nombre del Padre/Madre Mexicano(a):";
+            inp1.placeholder = "Ej. CARLOS PÉREZ";
+            lbl2.innerText = "Hospital o Lugar en EE. UU.:";
+            inp2.placeholder = "Ej. JACKSON MEMORIAL";
+        }
+    }
+
     async function enviarDatos() {
+        const dir = document.getElementById('direccion_usa').value.trim();
+        const tel = document.getElementById('telefono').value.trim();
+
+        if (!dir || !tel) {
+            alert('⚠️ Cuidado: La dirección y el teléfono en EE. UU. no pueden quedar en blanco.');
+            return;
+        }
+
         const payload = {
             tipo_tramite: document.getElementById('tipo_tramite').value,
             primer_nombre: document.getElementById('primer_nombre').value,
@@ -109,8 +191,10 @@
             segundo_apellido: document.getElementById('segundo_apellido').value,
             fecha_nacimiento: document.getElementById('fecha_nacimiento').value,
             lugar_nacimiento: document.getElementById('lugar_nacimiento').value,
-            direccion_usa: document.getElementById('direccion_usa').value,
-            telefono: document.getElementById('telefono').value
+            direccion_usa: dir,
+            telefono: tel,
+            extra_1: document.getElementById('extra_1').value,
+            extra_2: document.getElementById('extra_2').value
         };
 
         document.getElementById('formulario').style.display = 'none';
