@@ -391,6 +391,8 @@
     }
 
     function adaptarCamposFormulario() {
+        // ¡CORREGIDO! Se eliminó la lectura del ID inexistente 'sc_tipo_tramite'
+        // Ahora el script trabaja directamente con la variable global 'tramiteSeleccionado'
         const bFederal = document.getElementById("bloque-federal");
         const bConsular = document.getElementById("bloque-consular");
         const titulo = document.getElementById("titulo-servicio");
