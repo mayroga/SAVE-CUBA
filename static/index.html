@@ -21,7 +21,6 @@
         .btn-verde:hover { background: #047857; }
         .btn-atras { background: transparent; border: 1px solid #64748b; color: #cbd5e1; padding: 14px; width: 100%; border-radius: 12px; margin-top: 15px; cursor: pointer; font-size: 16px; }
         .caja-aviso { background: #334155; padding: 18px; border-radius: 12px; font-size: 15px; line-height: 1.5; color: #cbd5e1; margin-bottom: 20px; border-left: 5px solid #f59e0b; }
-        .paso-oculto { display: none; }
         .boton-servicio { background: #1e293b; border: 2px solid #3b82f6; border-radius: 16px; padding: 22px; margin-bottom: 15px; cursor: pointer; text-align: left; display: block; width: 100%; }
         .boton-servicio:hover { background: #2563eb; border-color: #60a5fa; }
         .servicio-titulo { font-size: 21px; font-weight: bold; color: #60a5fa; margin: 0 0 5px 0; }
@@ -55,7 +54,7 @@
             <div class="servicio-titulo">🇺🇸 1. Residencia Ajuste Cubano</div>
             <div class="servicio-descripcion">Incluye Permiso de Trabajo (I-765) y hoja de pago conjunta.</div>
         </button>
-        <button class="boton-servicio" onclick="irAlFormulario('pasintent_nuevo')">
+        <button class="boton-servicio" onclick="irAlFormulario('pasaporte_nuevo')">
             <div class="servicio-titulo">🇨🇺 2. Nuevo Pasaporte Cubano (10 Años)</div>
             <div class="servicio-descripcion">Sin prórrogas cada 2 años. Vence a los 10 años fijos (MINREX 2023).</div>
         </button>
@@ -114,7 +113,7 @@
 </div>
 
 <script>
-    const API_BASE_URL = 'https://onrender.com'; 
+    const API_BASE_URL = window.location.origin; 
     let tramiteSeleccionado = "";
 
     function despertarServidorYContinuar() {
@@ -124,8 +123,7 @@
     }
 
     function irAlFormulario(tipoTramite) {
-        // Corrección de código interno para pasaporte nuevo
-        tramiteSeleccionado = tipoTramite === "pasintent_nuevo" ? "pasaporte_nuevo" : tipoTramite;
+        tramiteSeleccionado = tipoTramite;
         document.getElementById("pantalla-inicio").classList.remove("activo");
         document.getElementById("paso-formulario").classList.add("activo");
         verificarDatosLocalesExistentes();
@@ -193,7 +191,6 @@
         SkinnerCamposGuardar();
         const payload = prepararPayload();
         try {
-            // CORREGIDO: Añadidas comillas invertidas para resolver el template string de la API
             const response = await fetch(`${API_BASE_URL}/api/asistente/procesar-directo`, {
                 method: "POST", 
                 headers: { "Content-Type": "application/json" }, 
@@ -218,9 +215,8 @@
         document.getElementById("paso-formulario").classList.remove("activo");
         document.getElementById("paso-exito").classList.add("activo");
         
-        // CORREGIDO: Añadidas comillas invertidas reglamentarias para la inyección del botón de descarga
         document.getElementById("caja-descarga-dinamica").innerHTML = `
-            <a href="${archivoUrl}" target="_blank"> 
+            <a href="${API_BASE_URL}${archivoUrl}" target="_blank"> 
                 <button class="btn-accion btn-verde" style="background:#059669; font-size:18px; width:100%;">📥 DESCARGAR MI DOCUMENTO COMPLETADO</button> 
             </a>
         `;
@@ -228,13 +224,11 @@
         const cajaInstruccion = document.getElementById("instruccion-envio-dinamica");
         if (cajaInstruccion) {
             if (tramiteSeleccionado.startsWith("pasaporte_")) {
-                // CORREGIDO: Añadidas comillas invertidas reglamentarias para el texto del Consulado Cubano
                 cajaInstruccion.innerHTML = `
                     <p><strong>3. Envíalo al Consulado Cubano:</strong></p>
                     <p class="texto-simple">Coloca la planilla impresa junto al Money Order de los aranceles consulares y envíala por correo postal certificado hacia el Consulado de Cuba en Washington D.C., o llévala directamente a tu agencia autorizada de confianza en Miami.</p>
                 `;
             } else {
-                // CORREGIDO: Añadidas comillas invertidas reglamentarias para el texto de USCIS
                 cajaInstruccion.innerHTML = `
                     <p><strong>3. Coloca la hoja de cobro G-1450 ARRIBA:</strong></p>
                     <p class="texto-simple">Pon la hoja de cobro G-1450 que rellenamos en la primera página de todo el paquete dentro del sobre. El oficial de USCIS cobrará los aranceles federales directamente desde tu tarjeta de banco estadounidense. Envíalo mediante correo certificado de USPS o FedEx.</p>
@@ -269,4 +263,6 @@
             ano_salida_cuba: document.getElementById("sc_ano_salida").value
         };
     }
-        
+</script>
+</body>
+</html>
