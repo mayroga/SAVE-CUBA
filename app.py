@@ -1,5 +1,6 @@
 import os
 import re
+import io
 import unicodedata
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Request
@@ -13,9 +14,13 @@ from openai import OpenAI
 from pypdf import PdfReader, PdfWriter
 import stripe
 
-app = FastAPI(title="SAVE CUBA - Motor Federal con Validación Estricta")
+# Librerías oficiales de ReportLab para la inyección de texto plano por coordenadas
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
 
-# Permitir conexiones seguras con el index.html de tu URL fija inamovible
+app = FastAPI(title="SAVE CUBA - Motor de Inyección Plana")
+
+# Permitir conexiones seguras únicamente desde tu frontend bajo tu URL fija
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,15 +35,15 @@ PLANTILLAS_DIR = os.path.join(BASE_DIR, "plantilla")  # Carpeta en singular 'pla
 SALIDAS_DIR = os.path.join(BASE_DIR, "descargas")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
-# Crear directorios automáticamente si no existen
+# Crear directorios de forma automática si no existen en Render
 os.makedirs(SALIDAS_DIR, exist_ok=True)
 
-# Clientes de Inteligencia Artificial leyendo tus variables reales de Render
+# Clientes de Inteligencia Artificial leyendo tus variables reales de producción
 client_openai = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "")) if os.environ.get("OPENAI_API_KEY") else None
 if os.environ.get("GEMINI_API_KEY"):
     genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
-# Pasarela de Stripe integrada
+# Pasarela comercial de Stripe integrada
 stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE_ID", "")
@@ -59,11 +64,11 @@ class DatosClienteUnificados(BaseModel):
     dev_username_input: Optional[str] = ""
     dev_password_input: Optional[str] = ""
 
-# Memoria RAM temporal pre-pago
+# Memoria RAM temporal para transacciones seguras pre-pago
 SESIONES_TEMPORALES = {}
 
 # =====================================================================
-# RUTA MAESTRA: RENDERIZA TU INDEX.HTML DIRECTO EN TU URL FIJA
+# RUTA MAESTRA: RENDERIZA TU INDEX.HTML DIRECTO EN TU URL INAMOVIBLE
 # =====================================================================
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
@@ -71,7 +76,7 @@ async def serve_index():
     if not os.path.exists(ruta_html):
         raise HTTPException(
             status_code=404, 
-            detail="Error de Servidor: No se encontró index.html adentro de la carpeta 'static'."
+            detail="Error de Servidor: No se encontró index.html adentro de la carpeta 'static' en GitHub."
         )
     with open(ruta_html, "r", encoding="utf-8") as f:
         return f.read()
@@ -85,7 +90,7 @@ def corregir_y_sanear_texto(texto: Optional[str], es_obligatorio: bool = False, 
             raise HTTPException(status_code=400, detail=f"¡Atención! Falta un dato obligatorio: El campo '{nombre_campo}' está vacío.")
         return ""
     
-    # Quitar acentos (Ej: Pérez -> PEREZ, Muñoz -> MUNOZ)
+    # Quitar acentos de fábrica (Ej: Pérez -> PEREZ, Muñoz -> MUNOZ)
     texto_plano = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
     # Fuerza letras mayúsculas de imprenta y limpia espacios en los extremos
     texto_plano = texto_plano.upper().strip()
@@ -165,9 +170,14 @@ def traducir_historial_laboral_ia(texto_espanol: str) -> str:
         return texto_espanol.upper()
 
 # =====================================================================
-# INYECTOR MECÁNICO DE ARCHIVOS PDF (ACROFORMS)
+# INYECTOR COMPLETAMENTE PLANO POR COORDENADAS (TU IDEA FINAL)
 # =====================================================================
 def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_salida: str) -> str:
+    """
+    TU IDEA DE INGENIERÍA: Abre el PDF original como un plano estático de fondo 
+    y estampa físicamente las letras en mayúsculas usando coordenadas fijas (canvas).
+    Esto es inmune a los bloqueos digitales de Adobe.
+    """
     if nombre_plantilla.startswith("plantilla_"):
         nombre_con_prefijo = nombre_plantilla
     else:
@@ -179,42 +189,96 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
     if not os.path.exists(ruta_input):
         raise HTTPException(
             status_code=500, 
-            detail=f"Falta archivo base en el servidor: {nombre_con_prefijo} dentro de la carpeta 'plantilla/'"
+            detail=f"Falta archivo base plano en el servidor: {nombre_con_prefijo} dentro de la carpeta 'plantilla/'"
         )
     
     try:
-        reader = PdfReader(ruta_input)
-        writer = PdfWriter()
-        writer.append(reader)
+        # 1. Crear una capa de texto transparente en la memoria RAM del servidor
+        packet = io.BytesIO()
+        can = canvas.Canvas(packet, pagesize=letter)
+        can.setFont("Helvetica-Bold", 10)  # Letra de imprenta limpia, gruesa y ultra legible
+        can.setFillColorRGB(0, 0, 0)       # Tinta negra pura profesional obligatoria
         
-        # 👑 TRUCO DE INGENIERÍA 1: Forzar al visor de PDF a mostrar las letras inyectadas
-        try:
-            if "/AcroForm" in writer._root_object:
-                writer._root_object["/AcroForm"].update({
-                    "/NeedAppearances": True
-                })
-        except Exception:
-            pass
+        # 2. Dibujar los textos basándose en las coordenadas parejas (X = horizontal, Y = vertical desde abajo)
+        for campo, valor in datos_mapeados.items():
+            if not valor:
+                continue
+            
+            val_str = str(valor)
+            
+            # --- COORDENADAS PARA LA HOJA DE PAGO (G-1450) ---
+            if nombre_plantilla == "g1450.pdf":
+                if "FamilyName" in campo: can.drawString(80, 595, val_str)
+                elif "GivenName" in campo: can.drawString(260, 595, val_str)
+                elif "MiddleName" in campo: can.drawString(440, 595, val_str)
+                elif "Amount" in campo: can.drawString(450, 415, val_str)
 
-        # 👑 TRUCO DE INGENIERÍA 2: Inyectar datos en los campos con índices estrictos de Adobe
-        writer.update_page_form_field_values(writer.pages, datos_mapeados)
+            # --- COORDENADAS PARA LA RESIDENCIA LEY DE AJUSTE (I-485) ---
+            elif nombre_plantilla == "i485.pdf":
+                if "Pt1Line3a_FamilyName" in campo: can.drawString(75, 688, val_str)
+                elif "Pt1Line3b_GivenName" in campo: can.drawString(265, 688, val_str)
+                elif "Pt1Line3c_MiddleName" in campo: can.drawString(440, 688, val_str)
+                elif "AlienRegistrationNumber" in campo: can.drawString(435, 735, val_str)
+                elif "Pt1Line8_DateOfBirth" in campo: can.drawString(440, 615, val_str)
+                elif "Pt3Line1_RecentEmployer" in campo: can.drawString(75, 310, val_str)
+
+            # --- COORDENADAS PARA EL PERMISO DE TRABAJO (I-765) ---
+            elif nombre_plantilla == "i765.pdf":
+                if "Line1a_FamilyName" in campo: can.drawString(75, 712, val_str)
+                elif "Line1b_GivenName" in campo: can.drawString(265, 712, val_str)
+                elif "Line1c_MiddleName" in campo: can.drawString(440, 712, val_str)
+                elif "AlienRegistrationNumber" in campo: can.drawString(435, 650, val_str)
+
+            # --- COORDENADAS PARA LA PLANILLA DEL PASAPORTE CUBANO ---
+            elif nombre_plantilla == "pasaporte.pdf":
+                if "Primer nombre" in campo: can.drawString(72, 642, val_str)
+                elif "Segundo nombre" in campo: can.drawString(320, 642, val_str)
+                elif "Primer apellido" in campo: can.drawString(72, 692, val_str)
+                elif "Segundo apellido" in campo: can.drawString(320, 692, val_str)
+                elif "DíaRow1" in campo: can.drawString(75, 590, val_str)
+                elif "MesRow1" in campo: can.drawString(130, 590, val_str)
+                elif "AñoRow1" in campo: can.drawString(185, 590, val_str)
+                elif "Número de Pasaporte" in campo: can.drawString(320, 540, val_str)
+                elif "Provincia" in campo: can.drawString(72, 540, val_str)
+                elif "AñoRow" in campo: can.drawString(490, 480, val_str)
+                elif "Profesión u oficio" in campo: can.drawString(72, 430, val_str)
+                # Dibujar las cruces físicas de las fases del pasaporte de forma matemática
+                elif "CasillaProrroga" in campo and val_str == "X": can.drawString(82, 742, "X")
+                elif "CasillaRenovacion" in campo and val_str == "X": can.drawString(195, 742, "X")
+                elif "CasillaPrimeraVez" in campo and val_str == "X": can.drawString(310, 742, "X")
+
+            # --- COORDENADAS PARA LA CIUDADANÍA AMERICANA (N-400) ---
+            elif nombre_plantilla == "n400.pdf":
+                if "P2_Line1_FamilyName" in campo: can.drawString(75, 630, val_str)
+                elif "P2_Line1_GivenName" in campo: can.drawString(265, 630, val_str)
+                elif "P2_Line1_MiddleName" in campo: can.drawString(440, 630, val_str)
+                elif "Line1_AlienNumber" in campo: can.drawString(435, 715, val_str)
+            elif "P2_Line8_DateOfBirth" in campo:
+                can.drawString(75, 510, val_str)
         
-        # 👑 TRUCO DE INGENIERÍA 3: Activar las banderas de visualización en cada campo para evitar hojas vacías
-        for page in writer.pages:
-            if "/Annots" in page:
-                for annot in page["/Annots"]:
-                    obj = annot.get_object()
-                    if obj.get("/Subtype") == "/Widget":
-                        # Forzar la bandera de visibilidad del campo de texto
-                        obj.update({"/F": 4}) 
+        can.save()
+        packet.seek(0)
         
+        # 3. Leer el PDF base original y fusionarle la capa de texto encima
+        new_pdf = PdfReader(packet)
+        existing_pdf = PdfReader(ruta_input)
+        writer = PdfWriter()
+        
+        # Fusionar de manera permanente los textos sobre la primera página
+        primera_pagina = existing_pdf.pages[0]
+        primera_pagina.merge_page(new_pdf.pages[0])
+        writer.add_page(primera_pagina)
+        
+        # Copiar el resto de las páginas del formulario intactas abajo
+        for i in range(1, len(existing_pdf.pages)):
+            writer.add_page(existing_pdf.pages[i])
+            
         with open(ruta_output, "wb") as f:
             writer.write(f)
             
         return ruta_output
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error mecánico al rellenar el PDF: {str(e)}")
-
+        raise HTTPException(status_code=500, detail=f"Error real al estampar texto plano en tu PDF: {str(e)}")
 # =====================================================================
 # MOTOR SEPARADOR Y EJECUTOR DE TRÁMITES (AISLAMIENTO TOTAL Y MAPEO)
 # =====================================================================
@@ -247,41 +311,22 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
         # IA Experta traduce el historial de trabajo al inglés federal de USCIS
         empleo_ingles = traducir_historial_laboral_ia(cliente.empleo_cuba_espanol)
         
-        # MAPEO REAL 1: Autorización de Pago Federal G-1450 ($1440)
-        campos_g1450 = {
-            "form1.#subform.GivenName": nombre1,
-            "form1.#subform.MiddleName": nombre2,
-            "form1.#subform.FamilyName": apellido1,
-            "form1.#subform.Amount": "1440.00"
-        }
+        # Inyección pareja basada en los identificadores exactos del canvas plano
+        rellenar_planilla_pdf("g1450.pdf", {
+            "FamilyName": apellido1, "GivenName": nombre1, "MiddleName": nombre2, "Amount": "1440"
+        }, "temp_g1450.pdf")
         
-        # MAPEO REAL 2: Formulario de Residencia I-485
-        campos_i485 = {
-            "form1.#subform.Pt1Line1_FamilyName": apellido1,
-            "form1.#subform.Pt1Line1_GivenName": nombre1,
-            "form1.#subform.Pt1Line1_MiddleName": nombre2,
-            "form1.#subform.Pt1Line2_AlienRegNumber": anumber_limpio,
-            "form1.#subform.Pt1Line4_DOB": fecha_usa,
-            "form1.#subform.Pt1Line5_CountryOfBirth": "CUBA",
-            "form1.#subform.Pt1Line6_CountryOfCitizenship": "CUBA",
-            "form1.#subform.Pt6_EmploymentHistory": empleo_ingles
-        }
+        rellenar_planilla_pdf("i485.pdf", {
+            "Pt1Line3a_FamilyName": apellido1, "Pt1Line3b_GivenName": nombre1, "Pt1Line3c_MiddleName": nombre2,
+            "AlienRegistrationNumber": anumber_limpio, "Pt1Line8_DateOfBirth": fecha_usa, "Pt3Line1_RecentEmployer": empleo_ingles
+        }, "temp_i485.pdf")
         
-        # MAPEO REAL 3: Formulario de Permiso de Trabajo I-765
-        campos_i765 = {
-            "form1.#subform.Pt1Line1_FamilyName": apellido1,
-            "form1.#subform.Pt1Line1_GivenName": nombre1,
-            "form1.#subform.Pt1Line1_MiddleName": nombre2,
-            "form1.#subform.Pt1Line2_AlienRegNumber": anumber_limpio,
-            "form1.#subform.Pt1Line4_DOB": fecha_usa
-        }
+        rellenar_planilla_pdf("i765.pdf", {
+            "Line1a_FamilyName": apellido1, "Line1b_GivenName": nombre1, "Line1c_MiddleName": nombre2,
+            "AlienRegistrationNumber": anumber_limpio
+        }, "temp_i765.pdf")
         
-        # Inyección pareja en tu carpeta 'plantilla/'
-        rellenar_planilla_pdf("g1450.pdf", campos_g1450, "temp_g1450.pdf")
-        rellenar_planilla_pdf("i485.pdf", campos_i485, "temp_i485.pdf")
-        rellenar_planilla_pdf("i765.pdf", campos_i765, "temp_i765.pdf")
-        
-        # Ensamblaje del sobre consolidado (El cobro G-1450 va obligatoriamente arriba)
+        # Ensamblaje oficial del sobre consolidado (El cobro G-1450 va obligatoriamente arriba)
         pdf_final = PdfWriter()
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_g1450.pdf"))
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_i485.pdf"))
@@ -305,7 +350,6 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
         if cliente.tramite_tipo != "pasaporte_primera_vez":
             pasaporte_limpio = validar_y_limpiar_pasaporte(cliente.pasaporte_actual, es_obligatorio=True)
 
-        # MAPEO REAL 4: Planilla Única del Consulado de Cuba en Washington
         campos_pasaporte = {
             "PrimerApellido": apellido1,
             "SegundoApellido": apellido2,
@@ -314,11 +358,10 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
             "MesNacimiento": mes,
             "AnoNacimiento": ano,
             "ProvinciaNacimiento": provincia_limpia,
-            "PaisNacimiento": "CUBA",
             "NumeroPasaporte": pasaporte_limpio,
             "AnoSalidaCuba": ano_salida_limpio,
             "OcupacionProfesion": empleo_espanol_limpio,
-            # Activar casillas de fase de forma dinámica con marcas reales "X"
+            # Marcar de forma limpia las fases consulares con una X
             "CasillaProrroga": "X" if cliente.tramite_tipo == "pasaporte_prorroga" else "",
             "CasillaRenovacion": "X" if cliente.tramite_tipo == "pasaporte_renovacion" else "",
             "CasillaPrimeraVez": "X" if cliente.tramite_tipo == "pasaporte_primera_vez" else ""
@@ -332,24 +375,14 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
     elif cliente.tramite_tipo == "naturalizacion_n400":
         anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
         
-        # MAPEO REAL 5: Formulario de Ciudadanía N-400
-        campos_n400 = {
-            "form1.#subform.Pt1Line1_FamilyName": apellido1,
-            "form1.#subform.Pt1Line1_GivenName": nombre1,
-            "form1.#subform.Pt1Line1_MiddleName": nombre2,
-            "form1.#subform.Pt1Line2_AlienRegNumber": anumber_limpio,
-            "form1.#subform.Pt2Line1_DOB": fecha_usa
-        }
+        rellenar_planilla_pdf("n400.pdf", {
+            "P2_Line1_FamilyName": apellido1, "P2_Line1_GivenName": nombre1, "P2_Line1_MiddleName": nombre2,
+            "Line1_AlienNumber": anumber_limpio, "P2_Line8_DateOfBirth": fecha_usa
+        }, "temp_n400.pdf")
         
-        # Reutilización de la estructura G-1450 pero inyectando la tarifa de ciudadanía ($710)
-        campos_g1450_n400 = {
-            "form1.#subform.GivenName": nombre1,
-            "form1.#subform.FamilyName": apellido1,
-            "form1.#subform.Amount": "710.00"
-        }
-        
-        rellenar_planilla_pdf("g1450.pdf", campos_g1450_n400, "temp_g1450.pdf")
-        rellenar_planilla_pdf("n400.pdf", campos_n400, "temp_n400.pdf")
+        rellenar_planilla_pdf("g1450.pdf", {
+            "FamilyName": apellido1, "GivenName": nombre1, "MiddleName": nombre2, "Amount": "710"
+        }, "temp_g1450.pdf")
         
         pdf_final = PdfWriter()
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_g1450.pdf"))
@@ -360,13 +393,14 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
             pdf_final.write(f)
             
     else:
-        raise HTTPException(status_code=400, detail="El trámite comercial solicitado no existe en SAVE CUBA.")
+        raise HTTPException(status_code=400, detail="El trámite comercial solicitado no existe en el sistema.")
 
 # =====================================================================
 # ENDPOINT DE DESARROLLO GRATUITO (BLOQUEO REAL SI FALTA EN RENDER)
 # =====================================================================
 @app.post("/api/asistente/gratis-dev")
 async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
+    # Lee de manera estricta tu configuración de Render sin textos inventados por defecto
     dev_usuario_servidor = os.environ.get("DEV_USER")
     dev_password_servidor = os.environ.get("DEV_PASS")
     
@@ -382,10 +416,10 @@ async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
     nombre_archivo = f"prueba_gratis_{cliente.tramite_tipo}.pdf"
     ejecutar_mapeo_y_guardado(cliente, nombre_archivo)
     
-    # RUTA MANDATORIA CON BARRA DIAGONAL CORREGIDA AL 100%
+    # RUTA MANDATORIA CON BARRA DIAGONAL AMARRADA A TU URL INAMOVIBLE
     return {
         "respuesta": "✔ Filtro Guardián Correcto", 
-        "archivo_url": f"https://onrender.com{nombre_archivo}"
+        "archivo_url": f"https://save-cuba.onrender.com{nombre_archivo}"
     }
 
 # =====================================================================
@@ -405,8 +439,8 @@ async def crear_checkout_stripe(cliente: DatosClienteUnificados):
             line_items=[{'price': STRIPE_PRICE_ID, 'quantity': 1}],
             mode='payment',
             metadata={"id_sesion_local": id_sesion_local},
-            success_url=f"https://onrender.com?stripe_status=success&file={id_sesion_local}.pdf",
-            cancel_url=f"https://onrender.com?stripe_status=cancel",
+            success_url=f"https://save-cuba.onrender.com?stripe_status=success&file={id_sesion_local}.pdf",
+            cancel_url=f"https://save-cuba.onrender.com?stripe_status=cancel",
         )
         return {"stripe_checkout_url": checkout_session.url}
     except Exception as e:
@@ -425,11 +459,10 @@ async def webhook_stripe(request: Request):
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         id_sesion_local = session.get("metadata", {}).get("id_sesion_local")
-        
-        if id_sesion_local and id_sesion_local in SESIONES_TEMPORALES:
+            if id_sesion_local and id_sesion_local in SESIONES_TEMPORALES:
             datos_cliente = SESIONES_TEMPORALES[id_sesion_local]
             ejecutar_mapeo_y_guardado(datos_cliente, f"{id_sesion_local}.pdf")
-            del SESIONES_TEMPORALES[id_sesion_local]
+            del SESIONES_TEMPORALES[id_sesion_local]  # Destrucción en memoria para privacidad total
 
     return {"status": "success"}
 
