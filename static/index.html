@@ -3,185 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AL CIELO - Sistema de Trámites y Asesoría</title>
+    <title>Asistente Consular Mexicano</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 700px; background: #fff; margin: 0 auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #004080; margin-bottom: 25px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
-        textarea { resize: vertical; height: 80px; }
-        button { background-color: #004080; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 15px; }
-        button:hover { background-color: #00264d; }
-        .resultado { margin-top: 20px; text-align: center; font-weight: bold; }
-        .hidden { display: none; }
+        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 600px; background: #fff; margin: auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { color: #b32134; text-align: center; font-size: 24px; margin-bottom: 5px; }
+        p.subtitle { text-align: center; color: #666; margin-bottom: 25px; font-size: 14px; }
+        .step { display: none; }
+        .step.active { display: block; }
+        label { display: block; margin-top: 15px; font-weight: bold; font-size: 14px; }
+        input { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        .buttons { margin-top: 25px; display: flex; justify-content: space-between; }
+        button { background: #b32134; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; width: 48%; }
+        button:secondary { background: #6c757d; }
+        button:hover { opacity: 0.9; }
+        .loading { text-align: center; font-size: 18px; color: #004080; display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>AL CIELO / SAVE CUBA</h2>
-    <form id="tramiteForm">
-        <div class="form-group">
-            <label for="tramite_tipo">Seleccione el Trámite:</label>
-            <select id="tramite_tipo" name="tramite_tipo" required onchange="cambiarTramite()">
-                <option value="paquete_completo_uscis">Paquete Completo USCIS (Residencia + Permiso de Trabajo)</option>
-                <option value="naturalizacion_n400">Ciudadanía Americana (N-400)</option>
-                <option value="pasaporte_nuevo">Pasaporte Cubano (Renovación / Nuevo)</option>
-                <option value="pasaporte_primera_vez">Pasaporte Cubano (Primera Vez)</option>
-                <option value="permiso_trabajo_solo">Permiso de Trabajo Independiente (I-765)</option>
-            </select>
+    <h1>Trámite Consular Mexicano</h1>
+    <p class="subtitle">Prepara tu documentación de forma rápida y sin errores</p>
+
+    <div id="formulario">
+        <!-- BLOQUE 1: Nombres -->
+        <div class="step active" id="step-1">
+            <label>Primer Nombre:</label>
+            <input type="text" id="primer_nombre" placeholder="Ej. JUAN">
+            <label>Segundo Nombre (Opcional):</label>
+            <input type="text" id="segundo_nombre" placeholder="Ej. ANTONIO">
+            <div class="buttons">
+                <div></div>
+                <button onclick="siguienteStep(2)">Siguiente</button>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="primer_nombre">Primer Nombre *</label>
-            <input type="text" id="primer_nombre" required>
+        <!-- BLOQUE 2: Apellidos -->
+        <div class="step" id="step-2">
+            <label>Apellido Paterno:</label>
+            <input type="text" id="primer_apellido" placeholder="Ej. PÉREZ">
+            <label>Apellido Materno (Opcional):</label>
+            <input type="text" id="segundo_apellido" placeholder="Ej. GÓMEZ">
+            <div class="buttons">
+                <button style="background:#6c757d" onclick="siguienteStep(1)">Atrás</button>
+                <button onclick="siguienteStep(3)">Siguiente</button>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="segundo_nombre">Segundo Nombre</label>
-            <input type="text" id="segundo_nombre">
+        <!-- BLOQUE 3: Nacimiento -->
+        <div class="step" id="step-3">
+            <label>Fecha de Nacimiento:</label>
+            <input type="date" id="fecha_nacimiento">
+            <label>Estado de Nacimiento en México:</label>
+            <input type="text" id="lugar_nacimiento" placeholder="Ej. JALISCO">
+            <div class="buttons">
+                <button style="background:#6c757d" onclick="siguienteStep(2)">Atrás</button>
+                <button onclick="siguienteStep(4)">Siguiente</button>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="primer_apellido">Primer Apellido *</label>
-            <input type="text" id="primer_apellido" required>
+        <!-- BLOQUE 4: Contacto en USA -->
+        <div class="step" id="step-4">
+            <label>Dirección Actual en EE. UU.:</label>
+            <input type="text" id="direccion_usa" placeholder="Ej. 123 MAIN ST, MIAMI FL">
+            <label>Teléfono de Contacto:</label>
+            <input type="text" id="telefono" placeholder="Ej. 7860000000">
+            <div class="buttons">
+                <button style="background:#6c757d" onclick="siguienteStep(3)">Atrás</button>
+                <button onclick="enviarDatos()" style="background: #28a745;">Generar Documento</button>
+            </div>
         </div>
+    </div>
 
-        <div class="form-group">
-            <label for="segundo_apellido">Segundo Apellido</label>
-            <input type="text" id="segundo_apellido">
-        </div>
-
-        <div class="form-group">
-            <label for="fecha_nacimiento">Fecha de Nacimiento *</label>
-            <input type="date" id="fecha_nacimiento" required>
-        </div>
-
-        <div class="form-group" id="group_anumber">
-            <label for="anumber">Número de Extranjero (A-Number - 9 dígitos)</label>
-            <input type="text" id="anumber" placeholder="Ej: 123456789">
-        </div>
-
-        <div class="form-group" id="group_direccion">
-            <label for="direccion_actual">Dirección Actual en EE. UU.</label>
-            <input type="text" id="direccion_actual" placeholder="Calle, Ciudad, Estado, Código Postal">
-        </div>
-
-        <div class="form-group hidden" id="group_estado_civil">
-            <label for="estado_civil">Estado Civil Actual</label>
-            <select id="estado_civil">
-                <option value="SOLTERO">Soltero/a</option>
-                <option value="CASADO">Casado/a</option>
-                <option value="DIVORCIADO">Divorciado/a</option>
-                <option value="VIUDO">Viudo/a</option>
-            </select>
-        </div>
-
-        <div class="form-group hidden" id="group_empleo">
-            <label for="empleo_cuba_espanol">Historial Laboral / Empleo en Cuba (en Español)</label>
-            <textarea id="empleo_cuba_espanol" placeholder="Describa su último empleo en Cuba..."></textarea>
-        </div>
-
-        <div class="form-group hidden" id="group_pasaporte">
-            <label for="pasaporte_actual">Número de Pasaporte Actual (Formato: H######)</label>
-            <input type="text" id="pasaporte_actual" placeholder="Ej: H123456">
-        </div>
-
-        <div class="form-group hidden" id="group_cuba">
-            <label for="provincia_cuba">Provincia de Nacimiento en Cuba</label>
-            <input type="text" id="provincia_cuba" placeholder="Ej: La Habana">
-        </div>
-
-        <div class="form-group hidden" id="group_ano_salida">
-            <label for="ano_salida_cuba">Año de Salida de Cuba</label>
-            <input type="text" id="ano_salida_cuba" placeholder="Ej: 2023">
-        </div>
-
-        <button type="submit">Generar y Descargar PDF</button>
-    </form>
-
-    <div class="resultado" id="resultado"></div>
+    <div class="loading" id="loading-box">
+        <p>Generando formato oficial optimizado...</p>
+    </div>
 </div>
 
 <script>
-function cambiarTramite() {
-    const tipo = document.getElementById('tramite_tipo').value;
-    const gAnumber = document.getElementById('group_anumber');
-    const gDireccion = document.getElementById('group_direccion');
-    const gEstadoCivil = document.getElementById('group_estado_civil');
-    const gEmpleo = document.getElementById('group_empleo');
-    const gPasaporte = document.getElementById('group_pasaporte');
-    const gCuba = document.getElementById('group_cuba');
-    const gAnoSalida = document.getElementById('group_ano_salida');
-
-    // Ocultar todo primero
-    [gAnumber, gDireccion, gEstadoCivil, gEmpleo, gPasaporte, gCuba, gAnoSalida].forEach(el => el.classList.add('hidden'));
-
-    if (tipo === 'paquete_completo_uscis') {
-        gAnumber.classList.remove('hidden');
-        gDireccion.classList.remove('hidden');
-        gEmpleo.classList.remove('hidden');
-    } else if (tipo === 'naturalizacion_n400') {
-        gAnumber.classList.remove('hidden');
-        gDireccion.classList.remove('hidden');
-        gEstadoCivil.classList.remove('hidden');
-    } else if (tipo === 'pasaporte_nuevo') {
-        gPasaporte.classList.remove('hidden');
-        gCuba.classList.remove('hidden');
-        gAnoSalida.classList.remove('hidden');
-    } else if (tipo === 'pasaporte_primera_vez') {
-        gCuba.classList.remove('hidden');
-        gAnoSalida.classList.remove('hidden');
-    } else if (tipo === 'permiso_trabajo_solo') {
-        gAnumber.classList.remove('hidden');
-        gDireccion.classList.remove('hidden');
+    function siguienteStep(n) {
+        document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+        document.getElementById('step-' + n).classList.add('active');
     }
-}
 
-// Ejecutar al iniciar para mostrar los campos correctos del primer option por defecto
-cambiarTramite();
+    async function enviarDatos() {
+        const payload = {
+            primer_nombre: document.getElementById('primer_nombre').value,
+            segundo_nombre: document.getElementById('segundo_nombre').value,
+            primer_apellido: document.getElementById('primer_apellido').value,
+            segundo_apellido: document.getElementById('segundo_apellido').value,
+            fecha_nacimiento: document.getElementById('fecha_nacimiento').value,
+            lugar_nacimiento: document.getElementById('lugar_nacimiento').value,
+            direccion_usa: document.getElementById('direccion_usa').value,
+            telefono: document.getElementById('telefono').value
+        };
 
-document.getElementById('tramiteForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const resDiv = document.getElementById('resultado');
-    resDiv.innerHTML = "Procesando documento...";
+        document.getElementById('formulario').style.display = 'none';
+        document.getElementById('loading-box').style.display = 'block';
 
-    const datos = {
-        tramite_tipo: document.getElementById('tramite_tipo').value,
-        primer_nombre: document.getElementById('primer_nombre').value,
-        segundo_nombre: document.getElementById('segundo_nombre').value,
-        primer_apellido: document.getElementById('primer_apellido').value,
-        segundo_apellido: document.getElementById('segundo_apellido').value,
-        fecha_nacimiento: document.getElementById('fecha_nacimiento').value,
-        anumber: document.getElementById('anumber').value,
-        direccion_actual: document.getElementById('direccion_actual').value,
-        estado_civil: document.getElementById('estado_civil').value,
-        empleo_cuba_espanol: document.getElementById('empleo_cuba_espanol').value,
-        pasaporte_actual: document.getElementById('pasaporte_actual').value,
-        provincia_cuba: document.getElementById('provincia_cuba').value,
-        ano_salida_cuba: document.getElementById('ano_salida_cuba').value
-    };
+        try {
+            const response = await fetch('/api/generar-tramite-mexicano', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-    try {
-        const response = await fetch('/api/asistente/procesar-directo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
-        });
-
-        const resultadoJson = await response.json();
-
-        if (!response.ok) {
-            throw new Error(resultadoJson.detail || "Error al procesar el trámite.");
+            const resultado = await response.json();
+            if (response.ok) {
+                window.location.href = resultado.archivo;
+            } else {
+                alert('Error: ' + resultado.detail);
+                document.getElementById('formulario').style.display = 'block';
+                document.getElementById('loading-box').style.display = 'none';
+            }
+        } catch (error) {
+            alert('Error de conexión con el servidor.');
+            document.getElementById('formulario').style.display = 'block';
+            document.getElementById('loading-box').style.display = 'none';
         }
-
-        resDiv.innerHTML = `<a href="${resultadoJson.archivo_url}" target="_blank" style="color: #004080; font-size: 16px; text-decoration: underline;">📥 ¡Documento listo! Haga clic aquí para descargar el PDF</a>`;
-    } catch (error) {
-        resDiv.innerHTML = `<span style="color: red;">Alerta: ${error.message}</span>`;
     }
-});
 </script>
 
 </body>
