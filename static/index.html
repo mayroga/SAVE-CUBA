@@ -30,8 +30,8 @@
                 <span class="text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded">Asesoría Profesional</span>
             </div>
             <div class="flex items-center space-x-3">
-                <button onclick="cambiarIdioma('es')" id="btn-es" class="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-200 transition">Español</button>
-                <button onclick="cambiarIdioma('en')" id="btn-en" class="px-3 py-1 text-sm bg-sky-600 hover:bg-sky-500 rounded text-white transition">English</button>
+                <button onclick="cambiarIdioma('es')" id="btn-es" class="px-3 py-1 text-sm bg-sky-600 rounded text-white transition">Español</button>
+                <button onclick="cambiarIdioma('en')" id="btn-en" class="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-200 transition">English</button>
             </div>
         </div>
     </header>
@@ -43,7 +43,7 @@
         <section id="seccion-seleccion" class="space-y-6">
             <div class="text-center space-y-2">
                 <h1 class="text-3xl font-bold text-white" data-translate="titulo_principal">Seleccione su Trámite Oficial</h1>
-                <p class="text-slate-400" data-translate="subtitulo_principal">Complete los datos de forma segura para autocomplentar sus planillas.</p>
+                <p class="text-slate-400" data-translate="subtitulo_principal">Complete los datos de forma segura para autocompletar sus planillas.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
@@ -135,9 +135,7 @@
                 </div>
             </form>
         </section>
-
-    </main>
-    <!-- SECCIÓN DE CARGA / PROCESAMIENTO -->
+        <!-- SECCIÓN DE CARGA / PROCESAMIENTO -->
         <section id="seccion-carga" class="hidden text-center py-16 space-y-6 bg-slate-800 border border-slate-700 rounded-xl shadow-xl">
             <div class="flex justify-center">
                 <div class="loading-spinner"></div>
@@ -172,7 +170,7 @@
             <p>El alcance legal de nuestro servicio se limita a la asesoría y preparación de formularios oficiales.</p>
         </div>
     </footer>
-    <!-- SCRIPT DE FUNCIONALIDAD -->
+   <!-- SCRIPT DE FUNCIONALIDAD -->
     <script>
         const API_BASE_URL = window.location.origin;
         let tramiteSeleccionado = "";
@@ -187,7 +185,7 @@
             },
             es: {
                 titulo_principal: "Seleccione su Trámite Oficial",
-                subtitulo_principal: "Complete los datos de forma segura para autocomplentar sus planillas.",
+                subtitulo_principal: "Complete los datos de forma segura para autocompletar sus planillas.",
                 btn_borrar: "Borrar",
                 btn_generar: "Generar Planilla PDF"
             }
@@ -218,7 +216,6 @@
             const divCuba = document.getElementById('div-cuba');
             const tituloTramite = document.getElementById('titulo-tramite-activo');
 
-            // Configurar visibilidad de campos según el trámite
             containerAnumber.classList.add('hidden');
             divPasaporte.classList.add('hidden');
             divCuba.classList.add('hidden');
@@ -311,4 +308,4 @@
         }
     </script>
 </body>
-</html>
+</html> 
