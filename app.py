@@ -8,7 +8,7 @@ from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 
-app = FastAPI(title="Asistente Consular Inteligente", version="1.4")
+app = FastAPI(title="Asistente Consular Mexicano - Alto Rendimiento", version="1.9")
 
 PLANTILLAS_DIR = "plantillas"
 SALIDAS_DIR = "salidas"
@@ -32,10 +32,7 @@ class DatosMexicano(BaseModel):
 def limpiar_y_corregir(texto: str) -> str:
     if not texto:
         return ""
-    # Eliminar espacios múltiples y caracteres extraños ilegales, manteniendo acentos y letras limpias
-    texto_limpio = re.sub(r'\s+', ' ', texto).strip()
-    # Convertir a mayúsculas de manera inteligente
-    return texto_limpio.upper()
+    return re.sub(r'\s+', ' ', texto).strip().upper()
 
 @app.post("/api/generar-tramite-mexicano")
 async def generar_tramite(datos: DatosMexicano):
@@ -49,12 +46,11 @@ async def generar_tramite(datos: DatosMexicano):
     ex1 = limpiar_y_corregir(datos.extra_1)
     ex2 = limpiar_y_corregir(datos.extra_2)
     
-    # Validación estricta anti casillas en blanco
     if not p1 or not a1 or not datos.fecha_nacimiento or not lugar or not direccion or not telefono:
-        raise HTTPException(status_code=400, detail="ALERTA: Hay campos obligatorios en blanco. Ningún dato puede quedar vacío.")
+        raise HTTPException(status_code=400, detail="ALERTA: Faltan datos obligatorios. Verifique los campos antes de continuar.")
     
     if "-" not in datos.fecha_nacimiento:
-        raise HTTPException(status_code=400, detail="Fecha de nacimiento inválida.")
+        raise HTTPException(status_code=400, detail="Formato de fecha no válido.")
     
     ano, mes, dia = datos.fecha_nacimiento.split("-")
     fecha_formateada = f"{dia}/{mes}/{ano}"
@@ -65,56 +61,67 @@ async def generar_tramite(datos: DatosMexicano):
     if datos.tipo_tramite == "pasaporte":
         nombre_base = "pasaporte"
         can.setFont("Helvetica-Bold", 13)
-        can.drawString(50, 750, "SOLICITUD DE PASAPORTE ORDINARIO MEXICANO")
+        can.drawString(40, 750, "GUÍA OFICIAL DE PREPARACIÓN CONSULAR: PASAPORTE MEXICANO")
         can.setFont("Helvetica-Bold", 10)
-        can.drawString(50, 720, "1. DATOS VERIFICADOS DEL SOLICITANTE:")
+        can.drawString(40, 725, "1. DATOS VERIFICADOS DEL SOLICITANTE:")
         can.setFont("Helvetica", 10)
-        can.drawString(50, 705, f"Apellidos: {a1} {a2} | Nombres: {p1} {p2}")
-        can.drawString(50, 690, f"Nacimiento: {fecha_formateada} | Estado: {lugar}")
-        can.drawString(50, 675, f"Domicilio USA: {direccion} | Tel: {telefono}")
+        can.drawString(40, 710, f"Apellidos: {a1} {a2} | Nombres: {p1} {p2}")
+        can.drawString(40, 695, f"Fecha de Nacimiento: {fecha_formateada} | Origen: {lugar}")
+        can.drawString(40, 680, f"Domicilio USA (Con C.P.): {direccion} | Tel: {telefono}")
         can.setFont("Helvetica-Bold", 10)
-        can.drawString(50, 645, "REQUISITOS OBLIGATORIOS QUE DEBE LLEVAR AL CONSULADO:")
+        can.drawString(40, 650, "CHECKLIST DE REQUISITOS OBLIGATORIOS (MARQUE CON UNA X):")
         can.setFont("Helvetica", 9)
-        can.drawString(50, 630, "- Acta de nacimiento mexicana original y legible (sin tachaduras).")
-        can.drawString(50, 615, "- Identificación oficial vigente con fotografía (INE, Matrícula o Pasaporte anterior).")
-        can.drawString(50, 600, "- CURP certificado e impreso recientemente.")
-        can.drawString(50, 585, "- Comprobante de pago de derechos consulares.")
+        can.drawString(40, 635, "[  ] Acta de nacimiento mexicana original (Verificar que no sea extemporánea ni ilegible).")
+        can.drawString(40, 620, "[  ] Identificación oficial vigente con fotografía (INE, Matrícula o Pasaporte anterior).")
+        can.drawString(40, 605, "[  ] CURP certificada e impresa recientemente.")
+        can.drawString(40, 590, "[  ] Comprobante de domicilio en EE. UU. con Código Postal visible.")
+        can.setFont("Helvetica-Bold", 8)
+        can.drawString(40, 570, "AVISO IMPORTANTE: Si el recibo está a nombre del propietario o rentador, lleve carta de residencia firmada.")
 
     elif datos.tipo_tramite == "matricula":
         nombre_base = "matricula"
         can.setFont("Helvetica-Bold", 13)
-        can.drawString(50, 750, "SOLICITUD DE MATRÍCULA CONSULAR DE ALTA SEGURIDAD")
+        can.drawString(40, 750, "GUÍA OFICIAL DE PREPARACIÓN CONSULAR: MATRÍCULA CONSULAR")
         can.setFont("Helvetica-Bold", 10)
-        can.drawString(50, 720, "1. DATOS VERIFICADOS DE IDENTIDAD:")
+        can.drawString(40, 725, "1. DATOS VERIFICADOS DEL TITULAR:")
         can.setFont("Helvetica", 10)
-        can.drawString(50, 705, f"Apellidos: {a1} {a2} | Nombres: {p1} {p2}")
-        can.drawString(50, 690, f"Fecha de Nacimiento: {fecha_formateada} | Origen: {lugar}")
-        can.drawString(50, 675, f"Domicilio USA: {direccion} | Tel: {telefono}")
-        can.drawString(50, 660, f"Contacto de Emergencia: {ex1} (Tel: {ex2})")
+        can.drawString(40, 710, f"Apellidos: {a1} {a2} | Nombres: {p1} {p2}")
+        can.drawString(40, 695, f"Fecha de Nacimiento: {fecha_formateada} | Origen: {lugar}")
+        can.drawString(40, 680, f"Domicilio USA (Con C.P.): {direccion} | Tel: {telefono}")
+        can.drawString(40, 665, f"Emergencia: {ex1} | Tel: {ex2}")
         can.setFont("Helvetica-Bold", 10)
-        can.drawString(50, 630, "REQUISITOS OBLIGATORIOS QUE DEBE LLEVAR AL CONSULADO:")
+        can.drawString(40, 640, "CHECKLIST DE REQUISITOS OBLIGATORIOS (MARQUE CON UNA X):")
         can.setFont("Helvetica", 9)
-        can.drawString(50, 615, "- Acta de nacimiento mexicana original.")
-        can.drawString(50, 600, "- Comprobante de domicilio reciente en EE. UU.")
-        can.drawString(50, 585, "- Identificación oficial con fotografía vigente.")
+        can.drawString(40, 625, "[  ] Acta de nacimiento mexicana original.")
+        can.drawString(40, 610, "[  ] Identificación oficial con fotografía vigente.")
+        can.drawString(40, 595, "[  ] Comprobante de domicilio reciente en EE. UU. con Código Postal claro.")
+        can.drawString(40, 580, "[  ] Datos de contacto de emergencia debidamente registrados.")
+        can.setFont("Helvetica-Bold", 8)
+        can.drawString(40, 560, "AVISO IMPORTANTE: Asegúrese de que su comprobante refleje exactamente la dirección actual.")
 
     elif datos.tipo_tramite == "registro":
         nombre_base = "registro_nacimiento"
         can.setFont("Helvetica-Bold", 13)
-        can.drawString(50, 750, "SOLICITUD DE REGISTRO DE NACIMIENTO (DOBLE NACIONALIDAD)")
+        can.drawString(40, 750, "GUÍA OFICIAL DE PREPARACIÓN: REGISTRO DE NACIMIENTO (DOBLE NACIONALIDAD)")
         can.setFont("Helvetica-Bold", 10)
-        can.drawString(50, 720, "1. DATOS VERIFICADOS DEL MENOR REGISTRADO:")
+        can.drawString(40, 725, "1. DATOS VERIFICADOS DEL MENOR:")
         can.setFont("Helvetica", 10)
-        can.drawString(50, 705, f"Apellidos: {a1} {a2} | Nombres: {p1} {p2}")
-        can.drawString(50, 690, f"Fecha de Nacimiento: {fecha_formateada} | Hospital/Lugar: {lugar}")
-        can.drawString(50, 675, f"Padre/Madre Mexicano(a): {ex1}")
-        can.drawString(50, 660, f"Hospital de EE. UU.: {ex2}")
+        can.drawString(40, 710, f"Apellidos: {a1} {a2} | Nombres: {p1} {p2}")
+        can.drawString(40, 695, f"Fecha de Nacimiento: {fecha_formateada} | Lugar: {lugar}")
+        can.drawString(40, 680, f"Padre/Madre Mexicano(a): {ex1}")
+        can.drawString(40, 665, f"Hospital EE. UU.: {ex2}")
         can.setFont("Helvetica-Bold", 10)
-        can.drawString(50, 630, "REQUISITOS OBLIGATORIOS QUE DEBE LLEVAR AL CONSULADO:")
+        can.drawString(40, 640, "CHECKLIST DE REQUISITOS OBLIGATORIOS (MARQUE CON UNA X):")
         can.setFont("Helvetica", 9)
-        can.drawString(50, 615, "- Certificado de nacimiento de EE. UU. (Formato Largo / Apostillado).")
-        can.drawString(50, 600, "- Acta de nacimiento mexicana de los padres (originales).")
-        can.drawString(50, 585, "- Identificación oficial vigente de ambos padres.")
+        can.drawString(40, 625, "[  ] Certificado de nacimiento de EE. UU. (Formato Largo / Long Form original).")
+        can.drawString(40, 610, "[  ] Actas de nacimiento mexicanas originales de los padres.")
+        can.drawString(40, 595, "[  ] Identificaciones oficiales vigentes de ambos padres.")
+        can.drawString(40, 580, "[  ] Acta de matrimonio de los padres (si aplica) o presencia de ambos.")
+        can.setFont("Helvetica-Bold", 8)
+        can.drawString(40, 560, "AVISO IMPORTANTE: El certificado de EE. UU. debe ser el formato largo con firmas legibles.")
+
+    else:
+        raise HTTPException(status_code=400, detail="Trámite no válido.")
 
     can.save()
     packet.seek(0)
@@ -135,7 +142,7 @@ async def generar_tramite(datos: DatosMexicano):
 async def descargar(nombre_archivo: str):
     ruta = os.path.join(SALIDAS_DIR, nombre_archivo)
     if os.path.exists(ruta):
-        return FileResponse(ruta, media_type="application/pdf", filename="Documento_Consular_Oficial.pdf")
+        return FileResponse(ruta, media_type="application/pdf", filename="Guia_Oficial_Consular.pdf")
     raise HTTPException(status_code=404, detail="Archivo no encontrado.")
 
 @app.get("/")
@@ -143,4 +150,4 @@ async def home():
     if os.path.exists("index.html"):
         with open("index.html", "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>Error: Falta el archivo index.html</h1>", status_code=500)
+    return HTMLResponse(content="<h1>Error: Falta index.html</h1>", status_code=500)
