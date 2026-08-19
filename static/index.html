@@ -334,7 +334,7 @@
 
 <script>
     // URL ÚNICA Y FIJA DE PRODUCCIÓN PARA SAVE CUBA - PROHIBIDO MODIFICAR
-    const API_BASE_URL = 'https://onrender.com'; 
+    const API_BASE_URL = 'https://save-cuba.onrender.com'; 
 
     let tramiteSeleccionado = "";
     let contadorClicksSecretos = 0;
@@ -391,8 +391,6 @@
     }
 
     function adaptarCamposFormulario() {
-        // ¡CORREGIDO! Se eliminó la lectura del ID inexistente 'sc_tipo_tramite'
-        // Ahora el script trabaja directamente con la variable global 'tramiteSeleccionado'
         const bFederal = document.getElementById("bloque-federal");
         const bConsular = document.getElementById("bloque-consular");
         const titulo = document.getElementById("titulo-servicio");
@@ -484,7 +482,7 @@
     }
 
     // REVISIÓN EXPERTA: Sincroniza y envía los valores correctos de forma limpia según la fase
-    // CORREGIDO: 'startswith' cambiado por 'startsWith' (W mayúscula obligatoria en JavaScript)
+    // CORREGIDO: Se forzó 'startsWith' con la W mayúscula reglamentaria de JavaScript
     function prepararPayload() {
         const esCuba = tramiteSeleccionado.startsWith("pasaporte_");
         return {
@@ -507,7 +505,6 @@
         if (urlParams.get('stripe_status') === 'success') {
             document.getElementById("paso-bienvenida").classList.remove("activo");
             document.getElementById("paso-exito").classList.add("activo");
-            
             const archivoDescarga = urlParams.get('file') || 'expediente.pdf';
             document.getElementById("caja-descarga-dinamica").innerHTML = `
                 <a href="${API_BASE_URL}/api/descargar/${archivoDescarga}" target="_blank">
@@ -517,3 +514,6 @@
             document.getElementById("paso-exito").scrollIntoView({ behavior: 'smooth' });
         }
     });
+</script>
+</body>
+</html>
