@@ -3,7 +3,7 @@ import re
 import io
 import unicodedata
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
@@ -11,14 +11,14 @@ from deep_translator import GoogleTranslator
 import google.generativeai as genai
 from openai import OpenAI
 from pypdf import PdfReader, PdfWriter
-import stripe
 
 # Librerías de ReportLab para la inyección por coordenadas en tus PDFs planos
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 
-app = FastAPI(title="SAVE CUBA - Motor Masivo de Inyección Plana")
+app = FastAPI(title="SAVE CUBA - Motor Directo sin Fricciones")
 
+# Permitir conexiones seguras con el index.html de tu URL fija
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -38,10 +38,7 @@ client_openai = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "")) if os.envir
 if os.environ.get("GEMINI_API_KEY"):
     genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
-stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
-STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
-STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE_ID", "")
-
+# Esquema de datos limpio (Sin campos de usuario o contraseña)
 class DatosClienteUnificados(BaseModel):
     tramite_tipo: str
     primer_nombre: str
@@ -54,10 +51,6 @@ class DatosClienteUnificados(BaseModel):
     pasaporte_actual: Optional[str] = ""
     provincia_cuba: Optional[str] = ""
     ano_salida_cuba: Optional[str] = ""
-    dev_username_input: Optional[str] = ""
-    dev_password_input: Optional[str] = ""
-
-SESIONES_TEMPORALES = {}
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
@@ -73,42 +66,35 @@ def corregir_y_sanear_texto(texto: Optional[str], es_obligatorio: bool = False, 
             raise HTTPException(status_code=400, detail=f"El campo '{nombre_campo}' está vacío.")
         return ""
     texto_plano = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
-    texto_plano = texto_plano.upper().strip()
-    return " ".join(texto_plano.split())
+    return " ".join(texto_plano.upper().strip().split())
 
 def validar_y_limpiar_pasaporte(pasaporte_usuario: Optional[str], es_obligatorio: bool = False) -> str:
     if not pasaporte_usuario or not pasaporte_usuario.strip():
-        if es_obligatorio:
-            raise HTTPException(status_code=400, detail="Falta el número de Pasaporte Cubano.")
+        if es_obligatorio: raise HTTPException(status_code=400, detail="Falta el número de Pasaporte Cubano.")
         return ""
     limpio = re.sub(r'[^A-Z0-9]', '', pasaporte_usuario.strip().upper())
     if len(limpio) != 7 or not re.match(r'^[A-Z]\d{6}$', limpio):
-        raise HTTPException(status_code=400, detail="Estructura de Pasaporte Incorrecta (Debe ser 1 Letra y 6 Números, Ej: H123456).")
+        raise HTTPException(status_code=400, detail="Estructura de Pasaporte Incorrecta (1 Letra y 6 Números, Ej: H123456).")
     return limpio
 
 def validar_y_limpiar_anumber(anumber_usuario: Optional[str], es_obligatorio: bool = False) -> str:
     if not anumber_usuario or not anumber_usuario.strip():
-        if es_obligatorio:
-            raise HTTPException(status_code=400, detail="Falta el número de Extranjero (A-Number).")
+        if es_obligatorio: raise HTTPException(status_code=400, detail="Falta el número de Extranjero (A-Number).")
         return ""
     limpio = re.sub(r'\D', '', anumber_usuario.strip())
-    if len(limpio) != 9:
-        raise HTTPException(status_code=400, detail="El A-Number exige exactamente 9 números enteros.")
+    if len(limpio) != 9: raise HTTPException(status_code=400, detail="El A-Number exige exactamente 9 números enteros.")
     return limpio
 
 def traducir_historial_laboral_ia(texto_espanol: str) -> str:
-    if not texto_espanol or not texto_espanol.strip():
-        return ""
+    if not texto_espanol or not texto_espanol.strip(): return ""
     prompt = f'Translate the following employment history to professional English for USCIS immigration forms. Return ONLY the translation in UPPERCASE:\n"{texto_espanol}"'
     if client_openai:
         try:
             response = client_openai.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.2)
-            return response.choices[0].message.content.strip().upper()
+            return response.choices.message.content.strip().upper()
         except Exception: pass
-    try:
-        return GoogleTranslator(source='es', target='en').translate(texto_espanol).upper()
-    except Exception:
-        return texto_espanol.upper()
+    try: return GoogleTranslator(source='es', target='en').translate(texto_espanol).upper()
+    except Exception: return texto_espanol.upper()
 
 def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_salida: str) -> str:
     nombre_con_prefijo = nombre_plantilla if nombre_plantilla.startswith("plantilla_") else f"plantilla_{nombre_plantilla}"
@@ -179,13 +165,13 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
         for i in range(1, len(existing_pdf.pages)):
             writer.add_page(existing_pdf.pages[i])
             
-        with open(ruta_output, "wb") as f:
-            writer.write(f)
+        with open(ruta_output, "wb") as f: writer.write(f)
         return ruta_output
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error real al estampar: {str(e)}")
+    except Exception as e: raise HTTPException(status_code=500, detail=str(e))
 
-def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida: str):
+# ENDPOINT DIRECTO DE PROCESAMIENTO INMEDIATO Y GRATUITO
+@app.post("/api/asistente/procesar-directo")
+async def procesar_tramite_directo(cliente: DatosClienteUnificados):
     nombre1 = corregir_y_sanear_texto(cliente.primer_nombre, es_obligatorio=True, nombre_campo="Primer Nombre")
     nombre2 = corregir_y_sanear_texto(cliente.segundo_nombre)
     apellido1 = corregir_y_sanear_texto(cliente.primer_apellido, es_obligatorio=True, nombre_campo="Primer Apellido")
@@ -196,10 +182,11 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
     ano, mes, dia = cliente.fecha_nacimiento.split("-")
     fecha_usa = f"{mes}/{dia}/{ano}"
 
+    nombre_archivo_salida = f"save_cuba_{cliente.tramite_tipo}_{int(os.urandom(3).hex(), 16)}.pdf"
+
     if cliente.tramite_tipo == "paquete_completo_uscis":
         anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
         empleo_ingles = traducir_historial_laboral_ia(cliente.empleo_cuba_espanol)
-        
         rellenar_planilla_pdf("g1450.pdf", {"FamilyName": apellido1, "GivenName": nombre1, "MiddleName": nombre2, "Amount": "1440"}, "temp_g1450.pdf")
         rellenar_planilla_pdf("i485.pdf", {"Pt1Line3a_FamilyName": apellido1, "Pt1Line3b_GivenName": nombre1, "Pt1Line3c_MiddleName": nombre2, "AlienRegistrationNumber": anumber_limpio, "Pt1Line8_DateOfBirth": fecha_usa, "Pt3Line1_RecentEmployer": empleo_ingles}, "temp_i485.pdf")
         rellenar_planilla_pdf("i765.pdf", {"Line1a_FamilyName": apellido1, "Line1b_GivenName": nombre1, "Line1c_MiddleName": nombre2, "AlienRegistrationNumber": anumber_limpio}, "temp_i765.pdf")
@@ -221,9 +208,16 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
             pasaporte_limpio = validar_y_limpiar_pasaporte(cliente.pasaporte_actual, es_obligatorio=True)
             
         campos_pasaporte = {
-            "PrimerApellido": apellido1, "SegundoApellido": apellido2, "Nombres": f"{nombre1} {nombre2}".strip(),
-            "DiaNacimiento": dia, "MesNacimiento": mes, "AnoNacimiento": ano, "ProvinciaNacimiento": provincia_limpia,
-            "NumeroPasaporte": pasaporte_limpio, "AnoSalidaCuba": ano_salida_limpio, "OcupacionProfesion": empleo_espanol,
+            "PrimerApellido": apellido1, 
+            "SegundoApellido": apellido2, 
+            "Nombres": f"{nombre1} {nombre2}".strip(),
+            "DiaNacimiento": dia, 
+            "MesNacimiento": mes, 
+            "AnoNacimiento": ano, 
+            "ProvinciaNacimiento": provincia_limpia,
+            "NumeroPasaporte": pasaporte_limpio, 
+            "AnoSalidaCuba": ano_salida_limpio, 
+            "OcupacionProfesion": empleo_espanol,
             "CasillaNuevoPasaporte": "X" if cliente.tramite_tipo == "pasaporte_nuevo" else "",
             "CasillaPrimeraVez": "X" if cliente.tramite_tipo == "pasaporte_primera_vez" else ""
         }
@@ -240,59 +234,8 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
         with open(os.path.join(SALIDAS_DIR, id_archivo_salida), "wb") as f: 
             pdf_final.write(f)
 
-# =====================================================================
-# ENDPOINT DE DESARROLLO GRATUITO (CORREGIDO AL 100% CONTRA EL ERROR DNS)
-# =====================================================================
-@app.post("/api/asistente/gratis-dev")
-async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
-    dev_usuario_servidor = os.environ.get("DEV_USER")
-    dev_password_servidor = os.environ.get("DEV_PASS")
-    
-    if not dev_usuario_servidor or not dev_password_servidor:
-        raise HTTPException(status_code=503, detail="Faltan credenciales en Render.")
-        
-    if cliente.dev_username_input != dev_usuario_servidor or cliente.dev_password_input != dev_password_servidor:
-        raise HTTPException(status_code=401, detail="Credenciales incorrectas.")
-    
-    nombre_archivo = f"prueba_gratis_{cliente.tramite_tipo}.pdf"
-    ejecutar_mapeo_y_guardado(cliente, nombre_archivo)
-    
-    # 👑 BLINDAJE TOTAL: Forzamos la barra inclinada y la ruta intermedia de la API
-    return {
-        "respuesta": "✔ Filtro Guardián Correcto", 
-        "archivo_url": f"https://save-cuba.onrender.com{nombre_archivo}"
-    }
-
-@app.post("/api/stripe/checkout")
-async def crear_checkout_stripe(cliente: DatosClienteUnificados):
-    try:
-        id_sesion_local = f"tramite_{int(os.urandom(4).hex(), 16)}"
-        SESIONES_TEMPORALES[id_sesion_local] = cliente
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=['card'], line_items=[{'price': STRIPE_PRICE_ID, 'quantity': 1}], mode='payment',
-            metadata={"id_sesion_local": id_sesion_local},
-            success_url=f"https://save-cuba.onrender.com?stripe_status=success&file={id_sesion_local}.pdf",
-            cancel_url=f"https://save-cuba.onrender.com?stripe_status=cancel",
-        )
-        return {"stripe_checkout_url": checkout_session.url}
-    except Exception as e: 
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/stripe/webhook")
-async def webhook_stripe(request: Request):
-    payload = await request.body()
-    sig_header = request.headers.get("stripe-signature")
-    try: 
-        event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
-    except Exception: 
-        raise HTTPException(status_code=400, detail="Firma inválida")
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        id_sesion_local = session.get("metadata", {}).get("id_sesion_local")
-        if id_sesion_local in SESIONES_TEMPORALES:
-            ejecutar_mapeo_y_guardado(SESIONES_TEMPORALES[id_sesion_local], f"{id_sesion_local}.pdf")
-            del SESIONES_TEMPORALES[id_sesion_local]
-    return {"status": "success"}
+    # Sustituir 'tudominio.com' por el dominio real configurado en el servidor
+    return {"archivo_url": f"https://tudominio.com{id_archivo_salida}"}
 
 @app.get("/api/descargar/{nombre_archivo}")
 async def descargar_archivo_real(nombre_archivo: str):
