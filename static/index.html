@@ -161,8 +161,11 @@
                 encontrado = true;
             }
         });
-        if (encontrado) {
-            document.getElementById("alerta-recuerdo").innerText = "✨ Tu teléfono recordó tus datos de forma local.";
+        
+        // 👑 PROTECCIÓN 1: Validar si la etiqueta existe en el HTML antes de escribir en ella
+        const alerta = document.getElementById("alerta-recuerdo");
+        if (encontrado && alerta) {
+            alerta.innerText = "✨ Tu teléfono recordó tus datos de forma local.";
         }
     }
 
@@ -171,18 +174,21 @@
         const bConsular = document.getElementById("bloque-consular");
         const titulo = document.getElementById("titulo-servicio");
 
+        const elEmpleo = document.getElementById("sc_empleo_cuba");
+        if (elEmpleo) elEmpleo.style.display = "block";
+
         if (tramiteSeleccionado.startsWith("pasaporte_")) {
             titulo.innerText = tramiteSeleccionado === "pasaporte_nuevo" ? "🇨🇺 Nuevo Pasaporte (10 Años)" : "🇨🇺 Pasaporte Primera Vez";
-            bFederal.style.display = "none";
-            bConsular.style.display = "block";
+            if (bFederal) bFederal.style.display = "none";
+            if (bConsular) bConsular.style.display = "block";
         } else if (tramiteSeleccionado === "paquete_completo_uscis") {
             titulo.innerText = "🇺🇸 Residencia Ley de Ajuste";
-            bFederal.style.display = "block";
-            bConsular.style.display = "none";
+            if (bFederal) bFederal.style.display = "block";
+            if (bConsular) bConsular.style.display = "none";
         } else if (tramiteSeleccionado === "naturalizacion_n400") {
             titulo.innerText = "⭐ Ciudadanía Americana (N-400)";
-            bFederal.style.display = "block";
-            bConsular.style.display = "none";
+            if (bFederal) bFederal.style.display = "block";
+            if (bConsular) bConsular.style.display = "none";
         }
     }
 
@@ -204,7 +210,7 @@
             const data = await response.json();
             window.location.href = data.stripe_checkout_url;
         } catch (error) {
-            alert("❌ Error: " + error.message);
+            alert("❌ Error de Stripe: " + error.message);
             btn.innerText = "💳 PROCESAR Y PAGAR";
             btn.disabled = false;
         }
@@ -212,8 +218,10 @@
 
     async function solicitarProcesamientoGratisDev() {
         const btn = document.getElementById("btnPruebaGratis");
-        btn.innerText = "Validando...";
-        btn.disabled = true;
+        if (btn) {
+            btn.innerText = "Validando credenciales...";
+            btn.disabled = true;
+        }
         const payload = prepararPayload();
         payload.dev_username_input = document.getElementById("dev_user").value;
         payload.dev_password_input = document.getElementById("dev_pass").value;
@@ -234,8 +242,10 @@
             mostrarPantallaExitoYGuia(urlDescargaPerfecta);
         } catch (error) {
             alert("❌ Denegado: " + error.message);
-            btn.innerText = "🚀 GENERAR GRATIS";
-            btn.disabled = false;
+            if (btn) {
+                btn.innerText = "🚀 VALIDAR CREDENCIALES Y GENERAR GRATIS";
+                btn.disabled = false;
+            }
         }
     }
 
@@ -249,36 +259,39 @@
             </a>
         `;
 
+        // 👑 PROTECCIÓN 2: Validar si la caja de instrucciones existe en el paso de éxito antes de escribir
         const cajaInstruccion = document.getElementById("instruccion-envio-dinamica");
-        
-        if (tramiteSeleccionado.startsWith("pasaporte_")) {
-            cajaInstruccion.innerHTML = `
-                <p><strong>3 Envíalo al Consulado Cubano:</strong></p>
-                <p class="texto-simple">Coloca la planilla impresa junto al Money Order de los aranceles consulares y envíala por correo postal certificado hacia el Consulado de Cuba en Washington D.C., o llévala directamente a tu agencia autorizada de confianza en Miami.</p>
-            `;
-        } else {
-            cajaInstruccion.innerHTML = `
-                <p><strong>3 Coloca la hoja de cobro G-1450 ARRIBA:</strong></p>
-                <p class="texto-simple">Pon la hoja de cobro G-1450 que rellenamos en la primera página de todo el paquete dentro del sobre. El oficial de USCIS cobrará los aranceles federales directamente desde tu tarjeta de banco estadounidense. Envíalo mediante correo certificado de USPS o FedEx.</p>
-            `;
+        if (cajaInstruccion) {
+            if (tramiteSeleccionado.startsWith("pasaporte_")) {
+                cajaInstruccion.innerHTML = `
+                    <p><strong>3 Envíalo al Consulado Cubano:</strong></p>
+                    <p class="texto-simple">Coloca la planilla impresa junto al Money Order de los aranceles consulares y envíala por correo postal certificado hacia el Consulado de Cuba en Washington D.C., o llévala directamente a tu agencia autorizada de confianza en Miami.</p>
+                `;
+            } else {
+                cajaInstruccion.innerHTML = `
+                    <p><strong>3 Coloca la hoja de cobro G-1450 ARRIBA:</strong></p>
+                    <p class="texto-simple">Pon la hoja de cobro G-1450 que rellenamos en la primera página de todo el paquete dentro del sobre. El oficial de USCIS cobrará los aranceles federales directamente desde tu tarjeta de banco estadounidense. Envíalo mediante correo certificado de USPS o FedEx.</p>
+                `;
+            }
         }
         
         document.getElementById("paso-exito").scrollIntoView({ behavior: 'smooth' });
     }
 
+    // 👑 PROTECCIÓN 3: Sincronización total de campos opcionales para evitar el Error 500 en Render
     function prepararPayload() {
         const esCuba = tramiteSeleccionado.startsWith("pasaporte_");
         return {
             tramite_tipo: tramiteSeleccionado,
             primer_nombre: document.getElementById("sc_nombre1").value,
-            segundo_nombre: "",
+            segundo_nombre: "N/A", // Se envía texto por defecto para que Python no tire Error 500
             primer_apellido: document.getElementById("sc_apellido1").value,
-            segundo_apellido: "",
+            segundo_apellido: "N/A", // Se envía texto por defecto para que Python no tire Error 500
             fecha_nacimiento: document.getElementById("sc_fecha_nacimiento").value,
             empleo_cuba_espanol: document.getElementById("sc_empleo_cuba").value,
-            anumber: !esCuba ? document.getElementById("sc_anumber").value : "",
-            pasaporte_actual: (esCuba && tramiteSeleccionado !== "pasaporte_primera_vez") ? document.getElementById("sc_pasaporte_num").value : "",
-            provincia_cuba: esCuba ? document.getElementById("sc_provincia").value : "",
+            anumber: !esCuba ? document.getElementById("sc_anumber").value : "N/A",
+            pasaporte_actual: (esCuba && tramiteSeleccionado !== "pasaporte_primera_vez") ? document.getElementById("sc_pasaporte_num").value : "N/A",
+            provincia_cuba: esCuba ? document.getElementById("sc_provincia").value : "N/A",
             ano_salida_cuba: "2023"
         };
     }
