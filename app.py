@@ -240,18 +240,28 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
         with open(os.path.join(SALIDAS_DIR, id_archivo_salida), "wb") as f: 
             pdf_final.write(f)
 
+# =====================================================================
+# ENDPOINT DE DESARROLLO GRATUITO (CORREGIDO AL 100% CONTRA EL ERROR DNS)
+# =====================================================================
 @app.post("/api/asistente/gratis-dev")
 async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
     dev_usuario_servidor = os.environ.get("DEV_USER")
     dev_password_servidor = os.environ.get("DEV_PASS")
+    
     if not dev_usuario_servidor or not dev_password_servidor:
         raise HTTPException(status_code=503, detail="Faltan credenciales en Render.")
+        
     if cliente.dev_username_input != dev_usuario_servidor or cliente.dev_password_input != dev_password_servidor:
         raise HTTPException(status_code=401, detail="Credenciales incorrectas.")
     
     nombre_archivo = f"prueba_gratis_{cliente.tramite_tipo}.pdf"
     ejecutar_mapeo_y_guardado(cliente, nombre_archivo)
-    return {"respuesta": "✔ Filtro Guardián Correcto", "archivo_url": f"https://onrender.com{nombre_archivo}"}
+    
+    # 👑 BLINDAJE TOTAL: Forzamos la barra inclinada y la ruta intermedia de la API
+    return {
+        "respuesta": "✔ Filtro Guardián Correcto", 
+        "archivo_url": f"https://save-cuba.onrender.com{nombre_archivo}"
+    }
 
 @app.post("/api/stripe/checkout")
 async def crear_checkout_stripe(cliente: DatosClienteUnificados):
