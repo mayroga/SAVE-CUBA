@@ -7,3 +7,4 @@ openai
 google-generativeai
 stripe
 reportlab
+requests
