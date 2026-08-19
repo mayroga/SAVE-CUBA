@@ -459,9 +459,16 @@
                 const err = await response.json();
                 throw new Error(err.detail || "Credenciales incorrectas.");
             }
-            const data = await response.json();
             
-            mostrarPantallaExitoYGuia(data.archivo_url);
+            // Creamos el nombre del archivo exactamente igual al que fabricó el servidor
+            const nombreArchivoFijo = `prueba_gratis_${tramiteSeleccionado}.pdf`;
+            
+            // ¡CORREGIDO AQUÍ! Forzamos la URL inamovible unida estrictamente al endpoint de descargas real
+            const urlDescargaPerfecta = `https://onrender.com{nombreArchivoFijo}`;
+            
+            // Enviamos la ruta limpia a la pantalla de éxito
+            mostrarPantallaExitoYGuia(urlDescargaPerfecta);
+            
         } catch (error) {
             alert("❌ Denegado: " + error.message);
             btn.innerText = "🚀 VALIDAR CREDENCIALES Y GENERAR GRATIS";
