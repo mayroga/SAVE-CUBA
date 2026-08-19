@@ -206,10 +206,12 @@
 
 <script>
     // URL ÚNICA Y FIJA DE PRODUCCIÓN PARA SAVE CUBA - PROHIBIDO MODIFICAR
-    const API_BASE_URL = 'https://save-cuba.onrender.com';
+    const API_BASE_URL = 'https://onrender.com'; 
+
     let tramiteSeleccionado = "";
     let contadorClicksSecretos = 0;
 
+    // LA MAGIA DE LOS 3 CLICKS PARA DESVELAR EL PANEL INVISIBLE
     function registrarClickSecreto() {
         contadorClicksSecretos++;
         if (contadorClicksSecretos === 3) {
@@ -223,7 +225,6 @@
     }
 
     function despertarServidorYContinuar() {
-        // CORREGIDO: Añadidas comillas invertidas obligatorias para leer la constante API_BASE_URL
         fetch(`${API_BASE_URL}/health`).catch(() => console.log("Despertando servidor central..."));
         document.getElementById("paso-bienvenida").classList.remove("activo");
         document.getElementById("pantalla-inicio").classList.add("activo");
@@ -286,13 +287,13 @@
             if (bConsular) bConsular.style.display = "none";
         }
     }
+
     async function solicitarCheckoutStripe() {
         const btn = document.getElementById("btnPagar");
         btn.innerText = "Abriendo pasarela de pago...";
         btn.disabled = true;
         const payload = prepararPayload();
         try {
-            // CORREGIDO: Comillas invertidas añadidas para leer la constante API_BASE_URL
             const response = await fetch(`${API_BASE_URL}/api/stripe/checkout`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -321,7 +322,6 @@
         payload.dev_username_input = document.getElementById("dev_user").value;
         payload.dev_password_input = document.getElementById("dev_pass").value;
         try {
-            // CORREGIDO: Comillas invertidas añadidas para leer la constante API_BASE_URL
             const response = await fetch(`${API_BASE_URL}/api/asistente/gratis-dev`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -332,7 +332,6 @@
                 throw new Error(err.detail || "Credenciales incorrectas.");
             }
             
-            // CORREGIDO: Comillas invertidas añadidas para estructurar el nombre del archivo
             const nombreArchivoFijo = `prueba_gratis_${tramiteSeleccionado}.pdf`;
             const urlDescargaPerfecta = `${API_BASE_URL}/api/descargar/${nombreArchivoFijo}`;
             
@@ -350,7 +349,6 @@
         document.getElementById("paso-formulario").classList.remove("activo");
         document.getElementById("paso-exito").classList.add("activo");
         
-        // CORREGIDO: Comillas invertidas añadidas para inyectar el código HTML del botón
         document.getElementById("caja-descarga-dinamica").innerHTML = `
             <a href="${archivoUrl}" target="_blank">
                 <button class="btn-accion btn-verde" style="background:#059669; font-size:18px;">📥 DESCARGAR MI DOCUMENTO COMPLETADO</button>
@@ -360,13 +358,11 @@
         const cajaInstruccion = document.getElementById("instruccion-envio-dinamica");
         if (cajaInstruccion) {
             if (tramiteSeleccionado.startsWith("pasaporte_")) {
-                // CORREGIDO: Comillas invertidas añadidas para inyectar la instrucción consular
                 cajaInstruccion.innerHTML = `
                     <p><strong>3. Envíalo al Consulado Cubano:</strong></p>
                     <p class="texto-simple">Coloca la planilla impresa junto al Money Order de los aranceles consulares y envíala por correo postal certificado hacia el Consulado de Cuba en Washington D.C., o llévala directamente a tu agencia autorizada de confianza en Miami.</p>
                 `;
             } else {
-                // CORREGIDO: Comillas invertidas añadidas para inyectar la instrucción de USCIS
                 cajaInstruccion.innerHTML = `
                     <p><strong>3. Coloca la hoja de cobro G-1450 ARRIBA:</strong></p>
                     <p class="texto-simple">Pon la hoja de cobro G-1450 que rellenamos en la primera página de todo el paquete dentro del sobre. El oficial de USCIS cobrará los aranceles federales directamente desde tu tarjeta de banco estadounidense. Envíalo mediante correo certificado de USPS o FedEx.</p>
@@ -379,7 +375,6 @@
     function prepararPayload() {
         const esCuba = tramiteSeleccionado.startsWith("pasaporte_");
         
-        // 👑 AJUSTE SINCRO: Si no se escribe fecha real, se envía formato por defecto para no romper el backend
         let fechaInput = document.getElementById("sc_fecha_nacimiento").value;
         if(!fechaInput || !fechaInput.includes("-")) {
             fechaInput = "1990-01-01";
@@ -387,12 +382,12 @@
         
         let anumberInput = document.getElementById("sc_anumber").value;
         if(!anumberInput || esCuba) {
-            anumberInput = "123456789"; // Valor neutro de 9 dígitos obligatorio para Python
+            anumberInput = "123456789"; 
         }
 
         let pasaporteInput = document.getElementById("sc_pasaporte_num").value;
         if(!pasaporteInput || !esCuba || tramiteSeleccionado === "pasaporte_primera_vez") {
-            pasaporteInput = "H123456"; // Valor neutro de pasaporte obligatorio para Python
+            pasaporteInput = "H123456"; 
         }
 
         return {
@@ -415,7 +410,9 @@
         if (urlParams.get('stripe_status') === 'success') {
             document.getElementById("paso-bienvenida").classList.remove("activo");
             const archivoDescarga = urlParams.get('file') || 'expediente.pdf';
-            // CORREGIDO: Comillas invertidas añadidas para estructurar el enlace de Stripe completado
             mostrarPantallaExitoYGuia(`${API_BASE_URL}/api/descargar/${archivoDescarga}`);
         }
     });
+</script>
+</body>
+</html>
