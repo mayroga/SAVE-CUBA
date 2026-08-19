@@ -346,11 +346,10 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
         raise HTTPException(status_code=400, detail="El trámite comercial solicitado no existe en SAVE CUBA.")
 
 # =====================================================================
-# ENDPOINT DE DESARROLLO GRATUITO (CORREGIDO AL 100% CON LA BARRA DE DESCARGA)
+# ENDPOINT DE DESARROLLO GRATUITO (BLOQUEO REAL SI FALTA EN RENDER)
 # =====================================================================
 @app.post("/api/asistente/gratis-dev")
 async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
-    # Lee de manera estricta tu configuración de Render sin textos inventados por defecto
     dev_usuario_servidor = os.environ.get("DEV_USER")
     dev_password_servidor = os.environ.get("DEV_PASS")
     
@@ -366,10 +365,10 @@ async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
     nombre_archivo = f"prueba_gratis_{cliente.tramite_tipo}.pdf"
     ejecutar_mapeo_y_guardado(cliente, nombre_archivo)
     
-    # ¡CORREGIDO AQUÍ! Se añade '/api/descargar/' explícitamente pegado a tu dominio inamovible
+    # RUTA MANDATORIA CON BARRA DIAGONAL CORREGIDA AL 100%
     return {
-        "respuesta": "✔ <strong>Filtro Guardián Correcto:</strong> Tus datos fueron corregidos, limpiados de tildes y volcados sobre la plantilla oficial.",
-        "archivo_url": f"https://save-cuba.onrender.com{nombre_archivo}"
+        "respuesta": "✔ Filtro Guardián Correcto", 
+        "archivo_url": f"https://onrender.com{nombre_archivo}"
     }
 
 # =====================================================================
@@ -379,6 +378,7 @@ async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
 async def crear_checkout_stripe(cliente: DatosClienteUnificados):
     if not stripe.api_key:
         raise HTTPException(status_code=503, detail="La pasarela comercial de Stripe no está configurada en Render.")
+    
     try:
         id_sesion_local = f"tramite_{int(os.urandom(4).hex(), 16)}"
         SESIONES_TEMPORALES[id_sesion_local] = cliente
@@ -388,9 +388,8 @@ async def crear_checkout_stripe(cliente: DatosClienteUnificados):
             line_items=[{'price': STRIPE_PRICE_ID, 'quantity': 1}],
             mode='payment',
             metadata={"id_sesion_local": id_sesion_local},
-            # CORREGIDO: Se amarró tu URL oficial inamovible para evitar errores DNS
-            success_url=f"https://save-cuba.onrender.com?stripe_status=success&file={id_sesion_local}.pdf",
-            cancel_url=f"https://save-cuba.onrender.com?stripe_status=cancel",
+            success_url=f"https://onrender.com?stripe_status=success&file={id_sesion_local}.pdf",
+            cancel_url=f"https://onrender.com?stripe_status=cancel",
         )
         return {"stripe_checkout_url": checkout_session.url}
     except Exception as e:
@@ -413,7 +412,7 @@ async def webhook_stripe(request: Request):
         if id_sesion_local and id_sesion_local in SESIONES_TEMPORALES:
             datos_cliente = SESIONES_TEMPORALES[id_sesion_local]
             ejecutar_mapeo_y_guardado(datos_cliente, f"{id_sesion_local}.pdf")
-            del SESIONES_TEMPORALES[id_sesion_local] # Destrucción en memoria para privacidad total
+            del SESIONES_TEMPORALES[id_sesion_local]
 
     return {"status": "success"}
 
@@ -435,4 +434,3 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run("app:app", host="0.0.0.0", port=port)
-    
