@@ -403,7 +403,7 @@ async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
     # RUTA MANDATORIA CON BARRA DIAGONAL AMARRADA A TU URL INAMOVIBLE
     return {
         "respuesta": "✔ Filtro Guardián Correcto", 
-        "archivo_url": f"https://onrender.com{nombre_archivo}"
+        "archivo_url": f"https://save-cuba.onrender.com{nombre_archivo}"
     }
 
 # =====================================================================
@@ -422,8 +422,8 @@ async def crear_checkout_stripe(cliente: DatosClienteUnificados):
             line_items=[{'price': STRIPE_PRICE_ID, 'quantity': 1}], 
             mode='payment',
             metadata={"id_sesion_local": id_sesion_local},
-            success_url=f"https://onrender.com?stripe_status=success&file={id_sesion_local}.pdf",
-            cancel_url=f"https://onrender.com?stripe_status=cancel",
+            success_url=f"https://save-cuba.onrender.com?stripe_status=success&file={id_sesion_local}.pdf",
+            cancel_url=f"https://save-cuba.onrender.com?stripe_status=cancel",
         )
         return {"stripe_checkout_url": checkout_session.url}
     except Exception as e: 
