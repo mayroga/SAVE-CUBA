@@ -15,7 +15,7 @@ from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 
-app = FastAPI(title="SAVE CUBA - Motor Directo sin Fricciones")
+app = FastAPI(title="AL CIELO - Motor Directo sin Fricciones")
 
 app.add_middleware(
     CORSMiddleware,
@@ -67,7 +67,7 @@ def corregir_y_sanear_texto(texto: Optional[str], es_obligatorio: bool = False, 
 
 def validar_y_limpiar_pasaporte(pasaporte_usuario: Optional[str], es_obligatorio: bool = False) -> str:
     if not pasaporte_usuario or not pasaporte_usuario.strip():
-        if es_obligatorio: raise HTTPException(status_code=400, detail="Falta el número de Pasaporte Cubano.")
+        if es_obligatorio: raise HTTPException(status_code=400, detail="Falta el número de Pasaporte.")
         return ""
     limpio = re.sub(r'[^A-Z0-9]', '', pasaporte_usuario.strip().upper())
     if len(limpio) != 7 or not re.match(r'^[A-Z]\d{6}$', limpio):
@@ -128,20 +128,6 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
                 elif "Line1b_GivenName" in campo: can.drawString(265, 712, val_str)
                 elif "Line1c_MiddleName" in campo: can.drawString(440, 712, val_str)
                 elif "AlienRegistrationNumber" in campo: can.drawString(435, 650, val_str)
-            elif nombre_plantilla == "pasaporte.pdf":
-                if "Primer nombre" in campo: can.drawString(72, 642, val_str)
-                elif "Segundo nombre" in campo: can.drawString(320, 642, val_str)
-                elif "Primer apellido" in campo: can.drawString(72, 692, val_str)
-                elif "Segundo apellido" in campo: can.drawString(320, 692, val_str)
-                elif "DíaRow1" in campo: can.drawString(75, 590, val_str)
-                elif "MesRow1" in campo: can.drawString(130, 590, val_str)
-                elif "AñoRow1" in campo: can.drawString(185, 590, val_str)
-                elif "Número de Pasaporte" in campo: can.drawString(320, 540, val_str)
-                elif "Provincia" in campo: can.drawString(72, 540, val_str)
-                elif "AñoRow" in campo: can.drawString(490, 480, val_str)
-                elif "Profesión u oficio" in campo: can.drawString(72, 430, val_str)
-                elif "CasillaNuevoPasaporte" in campo and val_str == "X": can.drawString(195, 742, "X")
-                elif "CasillaPrimeraVez" in campo and val_str == "X": can.drawString(310, 742, "X")
             elif nombre_plantilla == "n400.pdf":
                 if "P2_Line1_FamilyName" in campo: can.drawString(75, 630, val_str)
                 elif "P2_Line1_GivenName" in campo: can.drawString(265, 630, val_str)
@@ -178,7 +164,7 @@ async def procesar_tramite_directo(cliente: DatosClienteUnificados):
     ano, mes, dia = cliente.fecha_nacimiento.split("-")
     fecha_usa = f"{mes}/{dia}/{ano}"
 
-    nombre_archivo_salida = f"save_cuba_{cliente.tramite_tipo}_{int.from_bytes(os.urandom(3), 'big')}.pdf"
+    nombre_archivo_salida = f"alcielo_{cliente.tramite_tipo}_{int.from_bytes(os.urandom(3), 'big')}.pdf"
 
     if cliente.tramite_tipo == "paquete_completo_uscis":
         anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
@@ -193,31 +179,6 @@ async def procesar_tramite_directo(cliente: DatosClienteUnificados):
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_i765.pdf"))
         with open(os.path.join(SALIDAS_DIR, nombre_archivo_salida), "wb") as f: 
             pdf_final.write(f)
-
-    elif cliente.tramite_tipo in ["pasaporte_nuevo", "pasaporte_primera_vez"]:
-        provincia_limpia = corregir_y_sanear_texto(cliente.provincia_cuba, es_obligatorio=True, nombre_campo="Provincia de Origen")
-        ano_salida_limpio = corregir_y_sanear_texto(cliente.ano_salida_cuba, es_obligatorio=True, nombre_campo="Año de Salida")
-        empleo_espanol = corregir_y_sanear_texto(cliente.empleo_cuba_espanol, es_obligatorio=True, nombre_campo="Último empleo")
-        
-        pasaporte_limpio = ""
-        if cliente.tramite_tipo == "pasaporte_nuevo":
-            pasaporte_limpio = validar_y_limpiar_pasaporte(cliente.pasaporte_actual, es_obligatorio=True)
-            
-        campos_pasaporte = {
-            "PrimerApellido": apellido1, 
-            "SegundoApellido": apellido2, 
-            "Nombres": f"{nombre1} {nombre2}".strip(),
-            "DiaNacimiento": dia, 
-            "MesNacimiento": mes, 
-            "AnoNacimiento": ano, 
-            "ProvinciaNacimiento": provincia_limpia,
-            "NumeroPasaporte": pasaporte_limpio, 
-            "AnoSalidaCuba": ano_salida_limpio, 
-            "OcupacionProfesion": empleo_espanol,
-            "CasillaNuevoPasaporte": "X" if cliente.tramite_tipo == "pasaporte_nuevo" else "",
-            "CasillaPrimeraVez": "X" if cliente.tramite_tipo == "pasaporte_primera_vez" else ""
-        }
-        rellenar_planilla_pdf("pasaporte.pdf", campos_pasaporte, nombre_archivo_salida)
 
     elif cliente.tramite_tipo == "naturalizacion_n400":
         anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
