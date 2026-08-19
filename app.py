@@ -8,7 +8,7 @@ from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 
-app = FastAPI(title="Asistente Consular Mexicano - Alto Rendimiento", version="1.9")
+app = FastAPI(title="AURA BY MAY ROGA LLC - Asistente Consular", version="2.0")
 
 PLANTILLAS_DIR = "plantillas"
 SALIDAS_DIR = "salidas"
@@ -122,6 +122,12 @@ async def generar_tramite(datos: DatosMexicano):
 
     else:
         raise HTTPException(status_code=400, detail="Trámite no válido.")
+
+    # Escudo Legal de AURA BY MAY ROGA LLC en el PDF
+    can.setFont("Helvetica-Oblique", 7)
+    can.drawString(40, 50, "AURA BY MAY ROGA LLC | Servicio de Orientación Consular Profesional.")
+    can.drawString(40, 40, "Esta guía es una herramienta de apoyo y no constituye un documento oficial de la SRE ni del gobierno.")
+    can.drawString(40, 30, "La responsabilidad de presentar los documentos ante la autoridad consular recae exclusivamente en el usuario.")
 
     can.save()
     packet.seek(0)
