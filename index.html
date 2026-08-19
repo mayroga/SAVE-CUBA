@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Consular Mexicano</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 600px; background: #fff; margin: auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { color: #b32134; text-align: center; font-size: 24px; margin-bottom: 5px; }
+        p.subtitle { text-align: center; color: #666; margin-bottom: 25px; font-size: 14px; }
+        .step { display: none; }
+        .step.active { display: block; }
+        label { display: block; margin-top: 15px; font-weight: bold; font-size: 14px; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; background: #fff; }
+        .buttons { margin-top: 25px; display: flex; justify-content: space-between; }
+        button { background: #b32134; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; width: 48%; }
+        button:hover { opacity: 0.9; }
+        .loading { text-align: center; font-size: 18px; color: #004080; display: none; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Trámite Consular Mexicano</h1>
+    <p class="subtitle">Prepara tu documentación de forma rápida y sin errores</p>
+
+    <div id="formulario">
+        <!-- BLOQUE 1: Selección de Trámite y Nombres -->
+        <div class="step active" id="step-1">
+            <label>Seleccione el Trámite:</label>
+            <select id="tipo_tramite">
+                <option value="pasaporte">Pasaporte Mexicano</option>
+                <option value="matricula">Matrícula Consular</option>
+            </select>
+
+            <label>Primer Nombre:</label>
+            <input type="text" id="primer_nombre" placeholder="Ej. JUAN">
+            
+            <label>Segundo Nombre (Opcional):</label>
+            <input type="text" id="segundo_nombre" placeholder="Ej. ANTONIO">
+            
+            <div class="buttons">
+                <div></div>
+                <button onclick="siguienteStep(2)">Siguiente</button>
+            </div>
+        </div>
+
+        <!-- BLOQUE 2: Apellidos -->
+        <div class="step" id="step-2">
+            <label>Apellido Paterno:</label>
+            <input type="text" id="primer_apellido" placeholder="Ej. PÉREZ">
+            
+            <label>Apellido Materno (Opcional):</label>
+            <input type="text" id="segundo_apellido" placeholder="Ej. GÓMEZ">
+            
+            <div class="buttons">
+                <button style="background:#6c757d" onclick="siguienteStep(1)">Atrás</button>
+                <button onclick="siguienteStep(3)">Siguiente</button>
+            </div>
+        </div>
+
+        <!-- BLOQUE 3: Nacimiento -->
+        <div class="step" id="step-3">
+            <label>Fecha de Nacimiento:</label>
+            <input type="date" id="fecha_nacimiento">
+            
+            <label>Estado de Nacimiento en México:</label>
+            <input type="text" id="lugar_nacimiento" placeholder="Ej. JALISCO">
+            
+            <div class="buttons">
+                <button style="background:#6c757d" onclick="siguienteStep(2)">Atrás</button>
+                <button onclick="siguienteStep(4)">Siguiente</button>
+            </div>
+        </div>
+
+        <!-- BLOQUE 4: Contacto en USA -->
+        <div class="step" id="step-4">
+            <label>Dirección Actual en EE. UU.:</label>
+            <input type="text" id="direccion_usa" placeholder="Ej. 123 MAIN ST, MIAMI FL">
+            
+            <label>Teléfono de Contacto:</label>
+            <input type="text" id="telefono" placeholder="Ej. 7860000000">
+            
+            <div class="buttons">
+                <button style="background:#6c757d" onclick="siguienteStep(3)">Atrás</button>
+                <button onclick="enviarDatos()" style="background: #28a745;">Generar Documento</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading-box">
+        <p>Generando formato oficial optimizado...</p>
+    </div>
+</div>
+
+<script>
+    function siguienteStep(n) {
+        document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+        document.getElementById('step-' + n).classList.add('active');
+    }
+
+    async function enviarDatos() {
+        const payload = {
+            tipo_tramite: document.getElementById('tipo_tramite').value,
+            primer_nombre: document.getElementById('primer_nombre').value,
+            segundo_nombre: document.getElementById('segundo_nombre').value,
+            primer_apellido: document.getElementById('primer_apellido').value,
+            segundo_apellido: document.getElementById('segundo_apellido').value,
+            fecha_nacimiento: document.getElementById('fecha_nacimiento').value,
+            lugar_nacimiento: document.getElementById('lugar_nacimiento').value,
+            direccion_usa: document.getElementById('direccion_usa').value,
+            telefono: document.getElementById('telefono').value
+        };
+
+        document.getElementById('formulario').style.display = 'none';
+        document.getElementById('loading-box').style.display = 'block';
+
+        try {
+            const response = await fetch('/api/generar-tramite-mexicano', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const resultado = await response.json();
+            if (response.ok) {
+                window.location.href = resultado.archivo;
+            } else {
+                alert('Error: ' + resultado.detail);
+                document.getElementById('formulario').style.display = 'block';
+                document.getElementById('loading-box').style.display = 'none';
+            }
+        } catch (error) {
+            alert('Error de conexión con el servidor.');
+            document.getElementById('formulario').style.display = 'block';
+            document.getElementById('loading-box').style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
