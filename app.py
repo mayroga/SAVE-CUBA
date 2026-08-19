@@ -1,14 +1,13 @@
 import os
 import io
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 
-app = FastAPI(title="Asistente Consular Mexicano", version="1.0")
+app = FastAPI(title="Asistente Consular Mexicano", version="1.1")
 
 # Directorios de trabajo
 PLANTILLAS_DIR = "plantillas"
@@ -18,6 +17,7 @@ os.makedirs(PLANTILLAS_DIR, exist_ok=True)
 os.makedirs(SALIDAS_DIR, exist_ok=True)
 
 class DatosMexicano(BaseModel):
+    tipo_tramite: str  # "pasaporte" o "matricula"
     primer_nombre: str
     segundo_nombre: str = ""
     primer_apellido: str
@@ -48,28 +48,49 @@ async def generar_tramite(datos: DatosMexicano):
     ano, mes, dia = datos.fecha_nacimiento.split("-")
     fecha_formateada = f"{dia}/{mes}/{ano}"
 
-    nombre_salida = f"pasaporte_mexicano_{os.urandom(4).hex()}.pdf"
-    ruta_salida = os.path.join(SALIDAS_DIR, nombre_salida)
-    ruta_plantilla = os.path.join(PLANTILLAS_DIR, "pasaporte_mexicano.pdf")
+    # Definir el título según el trámite seleccionado
+    if datos.tipo_tramite == "pasaporte":
+        titulo_doc = "FORMATO DE SOLICITUD DE PASAPORTE MEXICANO"
+        nombre_base = "pasaporte"
+    elif datos.tipo_tramite == "matricula":
+        titulo_doc = "FORMATO DE SOLICITUD DE MATRÍCULA CONSULAR"
+        nombre_base = "matricula"
+    else:
+        raise HTTPException(status_code=400, detail="Tipo de trámite no válido.")
 
-    # Si no existe la plantilla física en el servidor, generamos una base limpia profesional con ReportLab
+    nombre_salida = f"{nombre_base}_mexicano_{os.urandom(4).hex()}.pdf"
+    ruta_salida = os.path.join(SALIDAS_DIR, nombre_salida)
+
+    # Generar la capa visual con los datos del solicitante
     packet = io.BytesIO()
     can = canvas.Canvas(packet, pagesize=letter)
-    can.setFont("Helvetica-Bold", 12)
+    can.setFont("Helvetica-Bold", 14)
+    can.drawString(50, 740, titulo_doc)
     
-    # Estampado en coordenadas exactas de la planilla consular
-    can.drawString(100, 720, f"APELLIDO PATERNO: {a1}")
-    can.drawString(320, 720, f"APELLIDO MATERNO: {a2}")
-    can.drawString(100, 680, f"NOMBRE(S): {p1} {p2}")
-    can.drawString(100, 640, f"FECHA DE NACIMIENTO: {fecha_formateada}")
-    can.drawString(320, 640, f"LUGAR DE NACIMIENTO: {limpiar_texto(datos.lugar_nacimiento)}")
-    can.drawString(100, 600, f"DIRECCION EN USA: {limpiar_texto(datos.direccion_usa)}")
-    can.drawString(100, 560, f"TELEFONO: {limpiar_texto(datos.telefono)}")
+    can.setFont("Helvetica-Bold", 11)
+    can.drawString(50, 700, "DATOS PERSONALES:")
+    can.setFont("Helvetica", 11)
+    can.drawString(50, 680, f"Apellido Paterno: {a1}")
+    can.drawString(300, 680, f"Apellido Materno: {a2}")
+    can.drawString(50, 650, f"Primer Nombre: {p1}")
+    can.drawString(300, 650, f"Segundo Nombre: {p2}")
+    
+    can.setFont("Helvetica-Bold", 11)
+    can.drawString(50, 610, "NACIMIENTO Y ORIGEN:")
+    can.setFont("Helvetica", 11)
+    can.drawString(50, 590, f"Fecha de Nacimiento: {fecha_formateada}")
+    can.drawString(300, 590, f"Estado en México: {limpiar_texto(datos.lugar_nacimiento)}")
+    
+    can.setFont("Helvetica-Bold", 11)
+    can.drawString(50, 550, "CONTACTO Y UBICACIÓN EN ESTADOS UNIDOS:")
+    can.setFont("Helvetica", 11)
+    can.drawString(50, 530, f"Dirección actual: {limpiar_texto(datos.direccion_usa)}")
+    can.drawString(50, 500, f"Teléfono: {limpiar_texto(datos.telefono)}")
     
     can.save()
     packet.seek(0)
     
-    # Guardar PDF final listo para descargar o imprimir
+    # Crear y guardar el PDF final
     new_pdf = PdfReader(packet)
     writer = PdfWriter()
     writer.add_page(new_pdf.pages[0])
@@ -83,10 +104,12 @@ async def generar_tramite(datos: DatosMexicano):
 async def descargar(nombre_archivo: str):
     ruta = os.path.join(SALIDAS_DIR, nombre_archivo)
     if os.path.exists(ruta):
-        return FileResponse(ruta, media_type="application/pdf", filename="Formato_Consular_Mexicano.pdf")
+        return FileResponse(ruta, media_type="application/pdf", filename="Documento_Consular_Oficial.pdf")
     raise HTTPException(status_code=404, detail="Archivo no encontrado.")
 
 @app.get("/")
 async def home():
-    with open("index.html", "r", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
+    if os.path.exists("index.html"):
+        with open("index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse(content="<h1>Error: Falta el archivo index.html en el servidor</h1>", status_code=500)
