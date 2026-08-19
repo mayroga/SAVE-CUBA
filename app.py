@@ -242,9 +242,8 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
                 elif "Provincia" in campo: can.drawString(72, 540, val_str)
                 elif "AñoRow" in campo: can.drawString(490, 480, val_str)
                 elif "Profesión u oficio" in campo: can.drawString(72, 430, val_str)
-                # Dibujar las cruces físicas de las fases del pasaporte de forma matemática
-                elif "CasillaProrroga" in campo and val_str == "X": can.drawString(82, 742, "X")
-                elif "CasillaRenovacion" in campo and val_str == "X": can.drawString(195, 742, "X")
+                # Dibujar las cruces físicas de las fases del pasaporte de forma matemática (Ley MINREX 2023)
+                elif "CasillaNuevoPasaporte" in campo and val_str == "X": can.drawString(195, 742, "X")
                 elif "CasillaPrimeraVez" in campo and val_str == "X": can.drawString(310, 742, "X")
 
             # --- COORDENADAS PARA LA CIUDADANÍA AMERICANA (N-400) ---
@@ -253,9 +252,7 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
                 elif "P2_Line1_GivenName" in campo: can.drawString(265, 630, val_str)
                 elif "P2_Line1_MiddleName" in campo: can.drawString(440, 630, val_str)
                 elif "Line1_AlienNumber" in campo: can.drawString(435, 715, val_str)
-            elif "P2_Line8_DateOfBirth" in campo:
-                can.drawString(75, 510, val_str)
-        
+                elif "P2_Line8_DateOfBirth" in campo: can.drawString(75, 510, val_str)
         can.save()
         packet.seek(0)
         
@@ -280,16 +277,14 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error real al estampar texto plano en tu PDF: {str(e)}")
 # =====================================================================
-# MOTOR SEPARADOR Y EJECUTOR DE TRÁMITES (AISLAMIENTO TOTAL Y MAPEO)
+# MOTOR SEPARADOR Y EJECUTOR DE TRÁMITES (ESTRICTA LEY CONSULAR VIGENTE)
 # =====================================================================
 
 def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida: str):
     """
     Estructura y separa al 100% los flujos para evitar mezclas peligrosas.
-    Mapea de forma milimétrica las variables sobre los nombres técnicos 
-    internos reales de las 5 plantillas oficiales para que NO salgan vacías.
+    Actualizado: Se eliminó la prórroga y se unificó bajo Nuevo Pasaporte Consular de 10 años.
     """
-    # 1. Saneamiento obligatorio de identidad (Mayúsculas, sin tildes, sin dobles espacios)
     nombre1 = corregir_y_sanear_texto(cliente.primer_nombre, es_obligatorio=True, nombre_campo="Primer Nombre")
     nombre2 = corregir_y_sanear_texto(cliente.segundo_nombre)
     apellido1 = corregir_y_sanear_texto(cliente.primer_apellido, es_obligatorio=True, nombre_campo="Primer Apellido")
@@ -305,10 +300,7 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
     # FLUJO 1: RESIDENCIA Y TRABAJO USA (USCIS - LEY DE AJUSTE) -> 3 PDFs
     # -----------------------------------------------------------------
     if cliente.tramite_tipo == "paquete_completo_uscis":
-        # Guardián estricto de longitud de Alien Number
         anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
-        
-        # IA Experta traduce el historial de trabajo al inglés federal de USCIS
         empleo_ingles = traducir_historial_laboral_ia(cliente.empleo_cuba_espanol)
         
         # Inyección pareja basada en los identificadores exactos del canvas plano
@@ -337,17 +329,15 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
             pdf_final.write(f)
 
     # -----------------------------------------------------------------
-    # FLUJO 2: PASAPORTE CUBANO (CONSULAR) -> 1 PDF ÚNICO (¡SÓLO ESPAÑOL!)
+    # FLUJO 2: PASAPORTE CUBANO LEGAL (NUEVO POR VENCIMIENTO / PRIMERA VEZ)
     # -----------------------------------------------------------------
-    elif cliente.tramite_tipo in ["pasaporte_prorroga", "pasaporte_renovacion", "pasaporte_primera_vez"]:
+    elif cliente.tramite_tipo in ["pasaporte_nuevo", "pasaporte_primera_vez"]:
         provincia_limpia = corregir_y_sanear_texto(cliente.provincia_cuba, es_obligatorio=True, nombre_campo="Provincia de Origen")
         ano_salida_limpio = corregir_y_sanear_texto(cliente.ano_salida_cuba, es_obligatorio=True, nombre_campo="Año de Salida")
-        
-        # Saneamiento incondicional: Se limpia pero SE MANTIENE EN ESPAÑOL
         empleo_espanol_limpio = corregir_y_sanear_texto(cliente.empleo_cuba_espanol, es_obligatorio=True, nombre_campo="Último empleo o estudios en Cuba")
         
         pasaporte_limpio = ""
-        if cliente.tramite_tipo != "pasaporte_primera_vez":
+        if cliente.tramite_tipo == "pasaporte_nuevo":
             pasaporte_limpio = validar_y_limpiar_pasaporte(cliente.pasaporte_actual, es_obligatorio=True)
 
         campos_pasaporte = {
@@ -361,12 +351,10 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
             "NumeroPasaporte": pasaporte_limpio,
             "AnoSalidaCuba": ano_salida_limpio,
             "OcupacionProfesion": empleo_espanol_limpio,
-            # Marcar de forma limpia las fases consulares con una X
-            "CasillaProrroga": "X" if cliente.tramite_tipo == "pasaporte_prorroga" else "",
-            "CasillaRenovacion": "X" if cliente.tramite_tipo == "pasaporte_renovacion" else "",
+            # Inyección limpia de marcas "X" eliminando la prórroga muerta
+            "CasillaNuevoPasaporte": "X" if cliente.tramite_tipo == "pasaporte_nuevo" else "",
             "CasillaPrimeraVez": "X" if cliente.tramite_tipo == "pasaporte_primera_vez" else ""
         }
-        # Inyección pareja únicamente en el archivo del consulado sin G-1450
         rellenar_planilla_pdf("pasaporte.pdf", campos_pasaporte, id_archivo_salida)
 
     # -----------------------------------------------------------------
@@ -393,25 +381,21 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
             pdf_final.write(f)
             
     else:
-        raise HTTPException(status_code=400, detail="El trámite comercial solicitado no existe en el sistema.")
+        raise HTTPException(status_code=400, detail="El trámite comercial solicitado no existe en SAVE CUBA.")
 
 # =====================================================================
-# ENDPOINT DE DESARROLLO GRATUITO (BLOQUEO REAL SI FALTA EN RENDER)
+# ENDPOINT DE DESARROLLO GRATUITO (BYPASS CON VARIABLES DE RENDER)
 # =====================================================================
 @app.post("/api/asistente/gratis-dev")
 async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
-    # Lee de manera estricta tu configuración de Render sin textos inventados por defecto
     dev_usuario_servidor = os.environ.get("DEV_USER")
     dev_password_servidor = os.environ.get("DEV_PASS")
     
     if not dev_usuario_servidor or not dev_password_servidor:
-        raise HTTPException(
-            status_code=503, 
-            detail="Error de Configuración: Las variables DEV_USER y DEV_PASS no han sido añadidas en el panel de Render."
-        )
+        raise HTTPException(status_code=503, detail="Variables DEV_USER y DEV_PASS ausentes en Render.")
     
     if cliente.dev_username_input != dev_usuario_servidor or cliente.dev_password_input != dev_password_servidor:
-        raise HTTPException(status_code=401, detail="Acceso Denegado: Las credenciales de pruebas escritas son incorrectas.")
+        raise HTTPException(status_code=401, detail="Credenciales de desarrollo incorrectas.")
     
     nombre_archivo = f"prueba_gratis_{cliente.tramite_tipo}.pdf"
     ejecutar_mapeo_y_guardado(cliente, nombre_archivo)
@@ -419,51 +403,49 @@ async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
     # RUTA MANDATORIA CON BARRA DIAGONAL AMARRADA A TU URL INAMOVIBLE
     return {
         "respuesta": "✔ Filtro Guardián Correcto", 
-        "archivo_url": f"https://save-cuba.onrender.com{nombre_archivo}"
+        "archivo_url": f"https://onrender.com{nombre_archivo}"
     }
 
 # =====================================================================
-# ENDPOINTS DE PASARELA COMERCIAL STRIPE Y WEBHOOKS
+# PASARELAS DE COBRO (STRIPE) Y WEBHOOK SEGURO
 # =====================================================================
 @app.post("/api/stripe/checkout")
 async def crear_checkout_stripe(cliente: DatosClienteUnificados):
-    if not stripe.api_key:
-        raise HTTPException(status_code=503, detail="La pasarela comercial de Stripe no está configurada en Render.")
-    
+    if not stripe.api_key: 
+        raise HTTPException(status_code=503, detail="Stripe no configurado.")
     try:
         id_sesion_local = f"tramite_{int(os.urandom(4).hex(), 16)}"
         SESIONES_TEMPORALES[id_sesion_local] = cliente
-
+        
         checkout_session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{'price': STRIPE_PRICE_ID, 'quantity': 1}],
+            payment_method_types=['card'], 
+            line_items=[{'price': STRIPE_PRICE_ID, 'quantity': 1}], 
             mode='payment',
             metadata={"id_sesion_local": id_sesion_local},
-            success_url=f"https://save-cuba.onrender.com?stripe_status=success&file={id_sesion_local}.pdf",
-            cancel_url=f"https://save-cuba.onrender.com?stripe_status=cancel",
+            success_url=f"https://onrender.com?stripe_status=success&file={id_sesion_local}.pdf",
+            cancel_url=f"https://onrender.com?stripe_status=cancel",
         )
         return {"stripe_checkout_url": checkout_session.url}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error en pasarela Stripe: {str(e)}")
+    except Exception as e: 
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/stripe/webhook")
 async def webhook_stripe(request: Request):
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature")
-    
-    try:
+    try: 
         event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
-    except Exception:
+    except Exception: 
         raise HTTPException(status_code=400, detail="Firma de Webhook inválida")
-
+        
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         id_sesion_local = session.get("metadata", {}).get("id_sesion_local")
-            if id_sesion_local and id_sesion_local in SESIONES_TEMPORALES:
+        if id_sesion_local and id_sesion_local in SESIONES_TEMPORALES:
             datos_cliente = SESIONES_TEMPORALES[id_sesion_local]
             ejecutar_mapeo_y_guardado(datos_cliente, f"{id_sesion_local}.pdf")
-            del SESIONES_TEMPORALES[id_sesion_local]  # Destrucción en memoria para privacidad total
-
+            del SESIONES_TEMPORALES[id_sesion_local] # Privacidad absoluta
+            
     return {"status": "success"}
 
 # =====================================================================
@@ -472,15 +454,15 @@ async def webhook_stripe(request: Request):
 @app.get("/api/descargar/{nombre_archivo}")
 async def descargar_archivo_real(nombre_archivo: str):
     ruta_archivo = os.path.join(SALIDAS_DIR, nombre_archivo)
-    if not os.path.exists(ruta_archivo):
-        raise HTTPException(status_code=404, detail="El archivo solicitado ya no está disponible en el servidor.")
+    if not os.path.exists(ruta_archivo): 
+        raise HTTPException(status_code=404, detail="Archivo no encontrado o expirado.")
     return FileResponse(ruta_archivo, media_type="application/pdf", filename=nombre_archivo)
 
 @app.get("/health")
-async def health_check():
+async def health_check(): 
     return {"status": "online", "sistema": "SAVE CUBA listo"}
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("app:app", host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))    
+        
