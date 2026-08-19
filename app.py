@@ -134,6 +134,10 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
                 elif "P2_Line1_MiddleName" in campo: can.drawString(440, 630, val_str)
                 elif "Line1_AlienNumber" in campo: can.drawString(435, 715, val_str)
                 elif "P2_Line8_DateOfBirth" in campo: can.drawString(75, 510, val_str)
+            elif nombre_plantilla == "pasaporte_cuba.pdf":
+                if "PrimerNombre" in campo: can.drawString(100, 700, val_str)
+                elif "PrimerApellido" in campo: can.drawString(100, 650, val_str)
+                elif "Provincia" in campo: can.drawString(100, 600, val_str)
         
         can.save()
         packet.seek(0)
@@ -190,6 +194,17 @@ async def procesar_tramite_directo(cliente: DatosClienteUnificados):
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_n400.pdf"))
         with open(os.path.join(SALIDAS_DIR, nombre_archivo_salida), "wb") as f: 
             pdf_final.write(f)
+
+    elif cliente.tramite_tipo in ["pasaporte_nuevo", "pasaporte_primera_vez"]:
+        provincia_saneada = corregir_y_sanear_texto(cliente.provincia_cuba, es_obligatorio=True, nombre_campo="Provincia de Nacimiento")
+        rellenar_planilla_pdf("pasaporte_cuba.pdf", {
+            "PrimerNombre": nombre1, 
+            "PrimerApellido": apellido1, 
+            "Provincia": provincia_saneada
+        }, nombre_archivo_salida)
+
+    else:
+        raise HTTPException(status_code=400, detail="Tipo de trámite no reconocido por el sistema.")
 
     return {"archivo_url": f"/api/descargar/{nombre_archivo_salida}"}
 
