@@ -330,11 +330,13 @@
 </div>
 
 <script>
-    const API_BASE_URL = 'https://onrender.com'; 
+    // URL ÚNICA Y FIJA DE PRODUCCIÓN PARA SAVE CUBA - PROHIBIDO MODIFICAR
+    const API_BASE_URL = 'https://save-cuba.onrender.com'; 
 
     let tramiteSeleccionado = "";
     let contadorClicksSecretos = 0;
 
+    // LA MAGIA DE LOS 3 CLICKS PARA DESVELAR EL PANEL INVISIBLE
     function registrarClickSecreto() {
         contadorClicksSecretos++;
         if (contadorClicksSecretos === 3) {
@@ -414,6 +416,7 @@
         }
     }
 
+    // FLUJO NORMAL: PASARELA DE STRIPE CON CONEXIÓN EN VIVO
     async function solicitarCheckoutStripe() {
         const btn = document.getElementById("btnPagar");
         btn.innerText = "Abriendo pasarela de pago seguro...";
@@ -438,6 +441,7 @@
         }
     }
 
+    // FLUJO EXCLUSIVO DE DESARROLLADOR: SALTA EL PAGO CON TU CONTRASEÑA DE RENDER
     async function solicitarProcesamientoGratisDev() {
         const btn = document.getElementById("btnPruebaGratis");
         btn.innerText = "Validando credenciales de pruebas...";
@@ -465,12 +469,11 @@
         }
     }
 
-    // FUNCIÓN EXPERTA: IMPRIME LAS INSTRUCCIONES CORRECTAS SIN MEZCLAR CUBA CON USA
+    // INSTRUCCIONES ADAPTABLES SIN MEZCLAR CUBA CON USA
     function mostrarPantallaExitoYGuia(archivoUrl) {
         document.getElementById("paso-formulario").classList.remove("activo");
         document.getElementById("paso-exito").classList.add("activo");
         
-        // Inyectar el botón verde de descarga dinámico
         document.getElementById("caja-descarga-dinamica").innerHTML = `
             <a href="${archivoUrl}" target="_blank">
                 <button class="btn-accion btn-verde" style="background:#059669; font-size:18px;">📥 DESCARGAR MI DOCUMENTO COMPLETADO</button>
@@ -480,48 +483,27 @@
         const cajaInstruccion = document.getElementById("instruccion-envio-dinamica");
         
         if (tramiteSeleccionado.startsWith("pasaporte_")) {
-            // Instrucción limpia para el Pasaporte de Cuba (Consular)
             cajaInstruccion.innerHTML = `
                 <span style="background: #3b82f6; color: white; padding: 3px 10px; border-radius: 50%; font-weight: bold; font-size: 14px;">3</span>
                 <strong style="color: #ffffff; font-size: 16px; margin-left: 5px;">Mete la planilla al sobre consular y envíala</strong>
-
-    // FLUJO EXCLUSIVO DE DESARROLLADOR: SALTA EL PAGO CON TU CONTRASEÑA DE RENDER
-    async function solicitarProcesamientoGratisDev() {
-        const btn = document.getElementById("btnPruebaGratis");
-        btn.innerText = "Validando credenciales de pruebas...";
-        btn.disabled = true;
-        const payload = prepararPayload();
-        payload.dev_username_input = document.getElementById("dev_user").value;
-        payload.dev_password_input = document.getElementById("dev_pass").value;
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/asistente/gratis-dev`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.detail || "Credenciales incorrectas.");
-            }
-            const data = await response.json();
-            
-            document.getElementById("paso-formulario").classList.remove("activo");
-            document.getElementById("paso-exito").classList.add("activo");
-            document.getElementById("caja-descarga-dinamica").innerHTML = `
-                <a href="${data.archivo_url}" target="_blank">
-                    <button class="btn-accion btn-verde" style="background:#059669; font-size:18px;">📥 DESCARGAR PAQUETE DE PRUEBA GRATIS</button>
-                </a>
+                <p style="font-size: 14px; color: #cbd5e1; margin: 5px 0 0 25px; line-height: 1.4;">
+                    Coloca tu planilla de pasaporte firmada dentro del sobre junto con tus fotos físicas de estudio y el Money Order correspondiente a los aranceles del Consulado de Cuba. Envíalo directamente a la dirección postal del Consulado en Washington D.C. o entrégaselo a tu agencia de confianza.
+                </p>
             `;
-            document.getElementById("paso-exito").scrollIntoView({ behavior: 'smooth' });
-        } catch (error) {
-            alert("❌ Denegado: " + error.message);
-            btn.innerText = "🚀 VALIDAR CREDENCIALES Y GENERAR GRATIS";
-            btn.disabled = false;
+        } else {
+            cajaInstruccion.innerHTML = `
+                <span style="background: #3b82f6; color: white; padding: 3px 10px; border-radius: 50%; font-weight: bold; font-size: 14px;">3</span>
+                <strong style="color: #ffffff; font-size: 16px; margin-left: 5px;">Coloca la hoja de cobro G-1450 arriba en el sobre</strong>
+                <p style="font-size: 14px; color: #cbd5e1; margin: 5px 0 0 25px; line-height: 1.4;">
+                    Pon la hoja de cobro G-1450 que rellenamos arriba de todo el paquete físico dentro del sobre. El oficial de USCIS pasará las tarifas gubernamentales directamente desde tu tarjeta bancaria americana. Agrega tus copias extras y envíalo por correo certificado (USPS/FedEx).
+                </p>
+            `;
         }
+        
+        document.getElementById("paso-exito").scrollIntoView({ behavior: 'smooth' });
     }
 
-    // REVISIÓN EXPERTA: Sincroniza y envía los valores correctos de forma limpia según la fase
-    // CORREGIDO: Se forzó 'startsWith' con la W mayúscula reglamentaria de JavaScript
+    // SINCRO EXPERTA DE CAMPOS CONDICIONALES
     function prepararPayload() {
         const esCuba = tramiteSeleccionado.startsWith("pasaporte_");
         return {
@@ -543,16 +525,10 @@
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('stripe_status') === 'success') {
             document.getElementById("paso-bienvenida").classList.remove("activo");
-            document.getElementById("paso-exito").classList.add("activo");
             const archivoDescarga = urlParams.get('file') || 'expediente.pdf';
-            document.getElementById("caja-descarga-dinamica").innerHTML = `
-                <a href="${API_BASE_URL}/api/descargar/${archivoDescarga}" target="_blank">
-                    <button class="btn-accion btn-verde" style="background:#059669; font-size:18px;">📥 DESCARGAR EXPEDIENTE COMPLETO</button>
-                </a>
-            `;
-            document.getElementById("paso-exito").scrollIntoView({ behavior: 'smooth' });
+            mostrarPantallaExitoYGuia(`${API_BASE_URL}/api/descargar/${archivoDescarga}`);
         }
     });
 </script>
 </body>
-</html>
+
