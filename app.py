@@ -12,13 +12,11 @@ import google.generativeai as genai
 from openai import OpenAI
 from pypdf import PdfReader, PdfWriter
 
-# Librerías de ReportLab para la inyección por coordenadas en tus PDFs planos
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 
 app = FastAPI(title="SAVE CUBA - Motor Directo sin Fricciones")
 
-# Permitir conexiones seguras con el index.html de tu URL fija
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -38,7 +36,6 @@ client_openai = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "")) if os.envir
 if os.environ.get("GEMINI_API_KEY"):
     genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
-# Esquema de datos limpio (Sin campos de usuario o contraseña)
 class DatosClienteUnificados(BaseModel):
     tramite_tipo: str
     primer_nombre: str
@@ -91,7 +88,7 @@ def traducir_historial_laboral_ia(texto_espanol: str) -> str:
     if client_openai:
         try:
             response = client_openai.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.2)
-            return response.choices.message.content.strip().upper()
+            return response.choices[0].message.content.strip().upper()
         except Exception: pass
     try: return GoogleTranslator(source='es', target='en').translate(texto_espanol).upper()
     except Exception: return texto_espanol.upper()
@@ -169,7 +166,6 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
         return ruta_output
     except Exception as e: raise HTTPException(status_code=500, detail=str(e))
 
-# ENDPOINT DIRECTO DE PROCESAMIENTO INMEDIATO Y GRATUITO
 @app.post("/api/asistente/procesar-directo")
 async def procesar_tramite_directo(cliente: DatosClienteUnificados):
     nombre1 = corregir_y_sanear_texto(cliente.primer_nombre, es_obligatorio=True, nombre_campo="Primer Nombre")
@@ -182,7 +178,7 @@ async def procesar_tramite_directo(cliente: DatosClienteUnificados):
     ano, mes, dia = cliente.fecha_nacimiento.split("-")
     fecha_usa = f"{mes}/{dia}/{ano}"
 
-    nombre_archivo_salida = f"save_cuba_{cliente.tramite_tipo}_{int(os.urandom(3).hex(), 16)}.pdf"
+    nombre_archivo_salida = f"save_cuba_{cliente.tramite_tipo}_{int.from_bytes(os.urandom(3), 'big')}.pdf"
 
     if cliente.tramite_tipo == "paquete_completo_uscis":
         anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
@@ -195,7 +191,7 @@ async def procesar_tramite_directo(cliente: DatosClienteUnificados):
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_g1450.pdf"))
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_i485.pdf"))
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_i765.pdf"))
-        with open(os.path.join(SALIDAS_DIR, id_archivo_salida), "wb") as f: 
+        with open(os.path.join(SALIDAS_DIR, nombre_archivo_salida), "wb") as f: 
             pdf_final.write(f)
 
     elif cliente.tramite_tipo in ["pasaporte_nuevo", "pasaporte_primera_vez"]:
@@ -221,7 +217,7 @@ async def procesar_tramite_directo(cliente: DatosClienteUnificados):
             "CasillaNuevoPasaporte": "X" if cliente.tramite_tipo == "pasaporte_nuevo" else "",
             "CasillaPrimeraVez": "X" if cliente.tramite_tipo == "pasaporte_primera_vez" else ""
         }
-        rellenar_planilla_pdf("pasaporte.pdf", campos_pasaporte, id_archivo_salida)
+        rellenar_planilla_pdf("pasaporte.pdf", campos_pasaporte, nombre_archivo_salida)
 
     elif cliente.tramite_tipo == "naturalizacion_n400":
         anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
@@ -231,11 +227,10 @@ async def procesar_tramite_directo(cliente: DatosClienteUnificados):
         pdf_final = PdfWriter()
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_g1450.pdf"))
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_n400.pdf"))
-        with open(os.path.join(SALIDAS_DIR, id_archivo_salida), "wb") as f: 
+        with open(os.path.join(SALIDAS_DIR, nombre_archivo_salida), "wb") as f: 
             pdf_final.write(f)
 
-    # Sustituir 'tudominio.com' por el dominio real configurado en el servidor
-    return {"archivo_url": f"https://tudominio.com{id_archivo_salida}"}
+    return {"archivo_url": f"/api/descargar/{nombre_archivo_salida}"}
 
 @app.get("/api/descargar/{nombre_archivo}")
 async def descargar_archivo_real(nombre_archivo: str):
@@ -252,4 +247,3 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run("app:app", host="0.0.0.0", port=port)
-        
