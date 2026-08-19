@@ -48,6 +48,12 @@ class DatosClienteUnificados(BaseModel):
     pasaporte_actual: Optional[str] = ""
     provincia_cuba: Optional[str] = ""
     ano_salida_cuba: Optional[str] = ""
+    # Nuevos campos ampliados para cobertura total de los 5 procesos
+    telefono: Optional[str] = ""
+    correo: Optional[str] = ""
+    direccion_actual: Optional[str] = ""
+    estado_civil: Optional[str] = ""
+    fecha_ultima_entrada: Optional[str] = ""
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
@@ -60,7 +66,7 @@ async def serve_index():
 def corregir_y_sanear_texto(texto: Optional[str], es_obligatorio: bool = False, nombre_campo: str = "") -> str:
     if not texto or not texto.strip():
         if es_obligatorio:
-            raise HTTPException(status_code=400, detail=f"El campo '{nombre_campo}' está vacío.")
+            raise HTTPException(status_code=400, detail=f"El campo '{nombre_campo}' es obligatorio.")
         return ""
     texto_plano = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
     return " ".join(texto_plano.upper().strip().split())
@@ -104,18 +110,32 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
     try:
         packet = io.BytesIO()
         can = canvas.Canvas(packet, pagesize=letter)
-        can.setFont("Helvetica-Bold", 10)
+        can.setFont("Helvetica-Bold", 9)
         can.setFillColorRGB(0, 0, 0)
         
         for campo, valor in datos_mapeados.items():
             if not valor: continue
             val_str = str(valor)
             
-            if nombre_plantilla == "g1450.pdf":
+            # 1. Planilla de Pasaporte Cubano (Nuevo / Primera vez)
+            if nombre_plantilla == "plantilla_pasaporte.pdf" or nombre_plantilla == "pasaporte.pdf":
+                if "PrimerNombre" in campo: can.drawString(110, 720, val_str)
+                elif "SegundoNombre" in campo: can.drawString(280, 720, val_str)
+                elif "PrimerApellido" in campo: can.drawString(110, 680, val_str)
+                elif "SegundoApellido" in campo: can.drawString(280, 680, val_str)
+                elif "FechaNacimiento" in campo: can.drawString(110, 640, val_str)
+                elif "Provincia" in campo: can.drawString(110, 600, val_str)
+                elif "AnoSalida" in campo: can.drawString(350, 600, val_str)
+                elif "PasaporteActual" in campo: can.drawString(110, 560, val_str)
+
+            # 2. Hoja de Pago G-1450
+            elif nombre_plantilla == "g1450.pdf":
                 if "FamilyName" in campo: can.drawString(80, 595, val_str)
                 elif "GivenName" in campo: can.drawString(260, 595, val_str)
                 elif "MiddleName" in campo: can.drawString(440, 595, val_str)
                 elif "Amount" in campo: can.drawString(450, 415, val_str)
+
+            # 3. Formulario I-485 (Residencia)
             elif nombre_plantilla == "i485.pdf":
                 if "Pt1Line3a_FamilyName" in campo: can.drawString(75, 688, val_str)
                 elif "Pt1Line3b_GivenName" in campo: can.drawString(265, 688, val_str)
@@ -123,21 +143,24 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
                 elif "AlienRegistrationNumber" in campo: can.drawString(435, 735, val_str)
                 elif "Pt1Line8_DateOfBirth" in campo: can.drawString(440, 615, val_str)
                 elif "Pt3Line1_RecentEmployer" in campo: can.drawString(75, 310, val_str)
+                elif "Direccion" in campo: can.drawString(75, 550, val_str)
+
+            # 4. Formulario I-765 (Permiso de Trabajo)
             elif nombre_plantilla == "i765.pdf":
                 if "Line1a_FamilyName" in campo: can.drawString(75, 712, val_str)
                 elif "Line1b_GivenName" in campo: can.drawString(265, 712, val_str)
                 elif "Line1c_MiddleName" in campo: can.drawString(440, 712, val_str)
                 elif "AlienRegistrationNumber" in campo: can.drawString(435, 650, val_str)
+                elif "Direccion" in campo: can.drawString(75, 580, val_str)
+
+            # 5. Formulario N-400 (Ciudadanía)
             elif nombre_plantilla == "n400.pdf":
                 if "P2_Line1_FamilyName" in campo: can.drawString(75, 630, val_str)
                 elif "P2_Line1_GivenName" in campo: can.drawString(265, 630, val_str)
                 elif "P2_Line1_MiddleName" in campo: can.drawString(440, 630, val_str)
                 elif "Line1_AlienNumber" in campo: can.drawString(435, 715, val_str)
                 elif "P2_Line8_DateOfBirth" in campo: can.drawString(75, 510, val_str)
-            elif nombre_plantilla == "pasaporte_cuba.pdf":
-                if "PrimerNombre" in campo: can.drawString(100, 700, val_str)
-                elif "PrimerApellido" in campo: can.drawString(100, 650, val_str)
-                elif "Provincia" in campo: can.drawString(100, 600, val_str)
+                elif "EstadoCivil" in campo: can.drawString(75, 450, val_str)
         
         can.save()
         packet.seek(0)
@@ -162,6 +185,7 @@ async def procesar_tramite_directo(cliente: DatosClienteUnificados):
     nombre2 = corregir_y_sanear_texto(cliente.segundo_nombre)
     apellido1 = corregir_y_sanear_texto(cliente.primer_apellido, es_obligatorio=True, nombre_campo="Primer Apellido")
     apellido2 = corregir_y_sanear_texto(cliente.segundo_apellido)
+    direccion_saneada = corregir_y_sanear_texto(cliente.direccion_actual)
     
     if not cliente.fecha_nacimiento or "-" not in cliente.fecha_nacimiento:
         raise HTTPException(status_code=400, detail="La Fecha de Nacimiento es inválida.")
@@ -170,12 +194,14 @@ async def procesar_tramite_directo(cliente: DatosClienteUnificados):
 
     nombre_archivo_salida = f"alcielo_{cliente.tramite_tipo}_{int.from_bytes(os.urandom(3), 'big')}.pdf"
 
+    # 1. Paquete Completo USCIS (Residencia I-485 + Permiso I-765 + Pago G-1450)
     if cliente.tramite_tipo == "paquete_completo_uscis":
         anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
         empleo_ingles = traducir_historial_laboral_ia(cliente.empleo_cuba_espanol)
+        
         rellenar_planilla_pdf("g1450.pdf", {"FamilyName": apellido1, "GivenName": nombre1, "MiddleName": nombre2, "Amount": "1440"}, "temp_g1450.pdf")
-        rellenar_planilla_pdf("i485.pdf", {"Pt1Line3a_FamilyName": apellido1, "Pt1Line3b_GivenName": nombre1, "Pt1Line3c_MiddleName": nombre2, "AlienRegistrationNumber": anumber_limpio, "Pt1Line8_DateOfBirth": fecha_usa, "Pt3Line1_RecentEmployer": empleo_ingles}, "temp_i485.pdf")
-        rellenar_planilla_pdf("i765.pdf", {"Line1a_FamilyName": apellido1, "Line1b_GivenName": nombre1, "Line1c_MiddleName": nombre2, "AlienRegistrationNumber": anumber_limpio}, "temp_i765.pdf")
+        rellenar_planilla_pdf("i485.pdf", {"Pt1Line3a_FamilyName": apellido1, "Pt1Line3b_GivenName": nombre1, "Pt1Line3c_MiddleName": nombre2, "AlienRegistrationNumber": anumber_limpio, "Pt1Line8_DateOfBirth": fecha_usa, "Pt3Line1_RecentEmployer": empleo_ingles, "Direccion": direccion_saneada}, "temp_i485.pdf")
+        rellenar_planilla_pdf("i765.pdf", {"Line1a_FamilyName": apellido1, "Line1b_GivenName": nombre1, "Line1c_MiddleName": nombre2, "AlienRegistrationNumber": anumber_limpio, "Direccion": direccion_saneada}, "temp_i765.pdf")
         
         pdf_final = PdfWriter()
         pdf_final.append(os.path.join(SALIDAS_DIR, "temp_g1450.pdf"))
@@ -184,9 +210,12 @@ async def procesar_tramite_directo(cliente: DatosClienteUnificados):
         with open(os.path.join(SALIDAS_DIR, nombre_archivo_salida), "wb") as f: 
             pdf_final.write(f)
 
+    # 2. Naturalización N-400 + Pago G-1450
     elif cliente.tramite_tipo == "naturalizacion_n400":
         anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
-        rellenar_planilla_pdf("n400.pdf", {"P2_Line1_FamilyName": apellido1, "P2_Line1_GivenName": nombre1, "P2_Line1_MiddleName": nombre2, "Line1_AlienNumber": anumber_limpio, "P2_Line8_DateOfBirth": fecha_usa}, "temp_n400.pdf")
+        estado_civil_saneado = corregir_y_sanear_texto(cliente.estado_civil)
+        
+        rellenar_planilla_pdf("n400.pdf", {"P2_Line1_FamilyName": apellido1, "P2_Line1_GivenName": nombre1, "P2_Line1_MiddleName": nombre2, "Line1_AlienNumber": anumber_limpio, "P2_Line8_DateOfBirth": fecha_usa, "EstadoCivil": estado_civil_saneado}, "temp_n400.pdf")
         rellenar_planilla_pdf("g1450.pdf", {"FamilyName": apellido1, "GivenName": nombre1, "MiddleName": nombre2, "Amount": "710"}, "temp_g1450.pdf")
         
         pdf_final = PdfWriter()
@@ -195,12 +224,31 @@ async def procesar_tramite_directo(cliente: DatosClienteUnificados):
         with open(os.path.join(SALIDAS_DIR, nombre_archivo_salida), "wb") as f: 
             pdf_final.write(f)
 
+    # 3 y 4. Pasaporte Cubano (Nuevo / Primera Vez)
     elif cliente.tramite_tipo in ["pasaporte_nuevo", "pasaporte_primera_vez"]:
         provincia_saneada = corregir_y_sanear_texto(cliente.provincia_cuba, es_obligatorio=True, nombre_campo="Provincia de Nacimiento")
-        rellenar_planilla_pdf("pasaporte_cuba.pdf", {
-            "PrimerNombre": nombre1, 
-            "PrimerApellido": apellido1, 
-            "Provincia": provincia_saneada
+        pasaporte_limpio = validar_y_limpiar_pasaporte(cliente.pasaporte_actual, es_obligatorio=(cliente.tramite_tipo == "pasaporte_nuevo"))
+        
+        rellenar_planilla_pdf("plantilla_pasaporte.pdf", {
+            "PrimerNombre": nombre1,
+            "SegundoNombre": nombre2,
+            "PrimerApellido": apellido1,
+            "SegundoApellido": apellido2,
+            "FechaNacimiento": fecha_usa,
+            "Provincia": provincia_saneada,
+            "AnoSalida": cliente.ano_salida_cuba,
+            "PasaporteActual": pasaporte_limpio
+        }, nombre_archivo_salida)
+
+    # 5. Permiso de Trabajo Independiente (I-765)
+    elif cliente.tramite_tipo == "permiso_trabajo_solo":
+        anumber_limpio = validar_y_limpiar_anumber(cliente.anumber, es_obligatorio=True)
+        rellenar_planilla_pdf("i765.pdf", {
+            "Line1a_FamilyName": apellido1,
+            "Line1b_GivenName": nombre1,
+            "Line1c_MiddleName": nombre2,
+            "AlienRegistrationNumber": anumber_limpio,
+            "Direccion": direccion_saneada
         }, nombre_archivo_salida)
 
     else:
