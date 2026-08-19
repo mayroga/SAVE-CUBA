@@ -6,7 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 from pypdf import PdfWriter, PdfReader
-import fitz  # PyMuPDF para manejo avanzado de PDFs si se requiere
 
 app = FastAPI(title="SAVE CUBA / AURA API", version="3.0")
 
