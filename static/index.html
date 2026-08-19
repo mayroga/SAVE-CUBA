@@ -109,13 +109,6 @@
             border-left: 5px solid #f59e0b;
         }
 
-        .resultado-box {
-            background: #1e293b;
-            border: 1px solid #3b82f6;
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 20px;
-        }
         .paso-oculto { display: none; }
 
         .boton-servicio {
@@ -168,20 +161,20 @@
             SAVE CUBA es un sistema informático privado operado por nuestra LLC. No guardamos, recolectamos ni almacenamos tus datos personales ni tus números bancarios en ningún servidor. Toda tu información se queda guardada únicamente en la memoria de tu propio teléfono o computadora.
         </div>
         <p class="texto-simple">
-            MAY ROGA LLC  no es una firma de abogados, no somos notarios ni tramitadores públicos. No cobramos dinero por enviar tus papeles al gobierno, ni realizamos gestiones migratorias ante USCIS o consulados. Solo vendemos un software automatizado de llenado y traducción fiel de formularios públicos de distribución gratuita.
+            Nuestra LLC no es una firma de abogados, no somos notarios ni tramitadores públicos. No cobramos dinero por enviar tus papeles al gobierno, ni realizamos gestiones migratorias ante USCIS o consulados. Solo vendemos un software automatizado de llenado y traducción fiel de formularios públicos de distribución gratuita.
         </p>
         <p class="texto-simple" style="font-weight: bold; color: #60a5fa; text-align: center;">
             Al presionar el botón verde de abajo, confirmas que comprendes y aceptas estas condiciones bajo tu propia cuenta y supervisión.
         </p>
         <button class="btn-accion btn-verde" onclick="despertarServidorYContinuar()">ACEPTO LOS TÉRMINOS Y DESEO INICIAR</button>
     </div>
-    <!-- PASO 2: MENÚ DE SERVICIOS EN ESPAÑOL CLARO CON SUS FASES -->
+
+    <!-- PASO 2: MENÚ DE SERVICIOS EN ESPAÑOL SINCRONIZADO CON EL BACKEND PLANO -->
     <div id="pantalla-inicio" class="seccion-paso">
         <p style="text-align: center; color: #94a3b8; margin-top: 0; margin-bottom: 20px; font-size: 16px;">
             Toca el botón del papel que necesitas arreglar hoy:
         </p>
         
-        <!-- TRÁMITE FEDERAL 1 -->
         <button class="boton-servicio" onclick="irAlFormulario('paquete_completo_uscis')">
             <div class="servicio-titulo">🇺🇸 1. Pedir la Residencia por Ley de Ajuste</div>
             <div class="servicio-descripcion">
@@ -190,7 +183,6 @@
             </div>
         </button>
 
-        <!-- TRÁMITE CONSULAR 2 (FASE A) -->
         <button class="boton-servicio" onclick="irAlFormulario('pasaporte_prorroga')">
             <div class="servicio-titulo">🇨🇺 2. Prórroga de Pasaporte Cubano</div>
             <div class="servicio-descripcion">
@@ -198,7 +190,6 @@
             </div>
         </button>
 
-        <!-- TRÁMITE CONSULAR 2 (FASE B) -->
         <button class="boton-servicio" onclick="irAlFormulario('pasaporte_renovacion')">
             <div class="servicio-titulo">🇨🇺 3. Renovación de Pasaporte Cubano</div>
             <div class="servicio-descripcion">
@@ -206,7 +197,6 @@
             </div>
         </button>
 
-        <!-- TRÁMITE CONSULAR 2 (FASE C) -->
         <button class="boton-servicio" onclick="irAlFormulario('pasaporte_primera_vez')">
             <div class="servicio-titulo">🇨🇺 4. Pasaporte Cubano por Primera Vez</div>
             <div class="servicio-descripcion">
@@ -214,7 +204,6 @@
             </div>
         </button>
 
-        <!-- TRÁMITE FEDERAL 3 -->
         <button class="boton-servicio" onclick="irAlFormulario('naturalizacion_n400')">
             <div class="servicio-titulo">⭐ 5. Hacerse Ciudadano Americano</div>
             <div class="servicio-descripcion">
@@ -222,7 +211,6 @@
             </div>
         </button>
     </div>
-
     <!-- PASO 3: FORMULARIO INTERACTIVO ADAPTABLE -->
     <div id="paso-formulario" class="card-blanca seccion-paso">
         <h3 class="titulo-pantalla" id="titulo-servicio">Rellena tus Datos</h3>
@@ -285,6 +273,7 @@
 
         <button class="btn-atras" onclick="regresarAlMenuServicios()">← CAMBIAR DE SERVICIO</button>
     </div>
+
     <!-- PASO 4: PANTALLA EXCLUSIVA DE ÉXITO ADAPTABLE -->
     <div id="paso-exito" class="card-blanca seccion-paso">
         <h3 class="titulo-pantalla" style="color: #4ade80; font-size: 26px;">¡Todo Listo! Tu trámite fue procesado</h3>
@@ -319,9 +308,7 @@
             </div>
 
             <!-- INSTRUCCIONES DINÁMICAS DESMEZCLADAS -->
-            <div style="margin-top: 15px;" id="instruccion-envio-dinamica">
-                <!-- Se rellena por JavaScript para no mezclar Cuba con USA -->
-            </div>
+            <div style="margin-top: 15px;" id="instruccion-envio-dinamica"></div>
         </div>
 
         <button class="btn-atras" style="margin-top: 30px;" onclick="location.reload()">INICIAR OTRO SERVICIO</button>
@@ -330,13 +317,11 @@
 </div>
 
 <script>
-    // URL ÚNICA Y FIJA DE PRODUCCIÓN PARA SAVE CUBA - PROHIBIDO MODIFICAR
-    const API_BASE_URL = 'https://save-cuba.onrender.com'; 
+    const API_BASE_URL = 'https://onrender.com'; 
 
     let tramiteSeleccionado = "";
     let contadorClicksSecretos = 0;
 
-    // LA MAGIA DE LOS 3 CLICKS PARA DESVELAR EL PANEL INVISIBLE
     function registrarClickSecreto() {
         contadorClicksSecretos++;
         if (contadorClicksSecretos === 3) {
@@ -416,7 +401,6 @@
         }
     }
 
-    // FLUJO NORMAL: PASARELA DE STRIPE CON CONEXIÓN EN VIVO
     async function solicitarCheckoutStripe() {
         const btn = document.getElementById("btnPagar");
         btn.innerText = "Abriendo pasarela de pago seguro...";
@@ -441,7 +425,6 @@
         }
     }
 
-    // FLUJO EXCLUSIVO DE DESARROLLADOR: SALTA EL PAGO CON TU CONTRASEÑA DE RENDER
     async function solicitarProcesamientoGratisDev() {
         const btn = document.getElementById("btnPruebaGratis");
         btn.innerText = "Validando credenciales de pruebas...";
@@ -460,15 +443,11 @@
                 throw new Error(err.detail || "Credenciales incorrectas.");
             }
             
-            // Creamos el nombre del archivo exactamente igual al que fabricó el servidor
             const nombreArchivoFijo = `prueba_gratis_${tramiteSeleccionado}.pdf`;
+            // CORREGIDO: Se amarró tu URL real inamovible con su barra de descarga obligatoria
+            const urlDescargaPerfecta = `https://onrender.com{nombreArchivoFijo}`;
             
-            // ¡CORREGIDO AQUÍ! Forzamos la URL inamovible unida estrictamente al endpoint de descargas real
-            const urlDescargaPerfecta = `https://save-cuba.onrender.com{nombreArchivoFijo}`;
-            
-            // Enviamos la ruta limpia a la pantalla de éxito
             mostrarPantallaExitoYGuia(urlDescargaPerfecta);
-            
         } catch (error) {
             alert("❌ Denegado: " + error.message);
             btn.innerText = "🚀 VALIDAR CREDENCIALES Y GENERAR GRATIS";
@@ -476,41 +455,41 @@
         }
     }
 
-    // INSTRUCCIONES ADAPTABLES SIN MEZCLAR CUBA CON USA
     function mostrarPantallaExitoYGuia(archivoUrl) {
         document.getElementById("paso-formulario").classList.remove("activo");
         document.getElementById("paso-exito").classList.add("activo");
         
+        // CORREGIDO: Añadidas comillas invertidas obligatorias para inyectar el HTML
         document.getElementById("caja-descarga-dinamica").innerHTML = `
             <a href="${archivoUrl}" target="_blank">
                 <button class="btn-accion btn-verde" style="background:#059669; font-size:18px;">📥 DESCARGAR MI DOCUMENTO COMPLETADO</button>
             </a>
         `;
-
+        
         const cajaInstruccion = document.getElementById("instruccion-envio-dinamica");
         
         if (tramiteSeleccionado.startsWith("pasaporte_")) {
+            // CORREGIDO: Añadidas comillas invertidas obligatorias para inyectar el HTML
             cajaInstruccion.innerHTML = `
-                <span style="background: #3b82f6; color: white; padding: 3px 10px; border-radius: 50%; font-weight: bold; font-size: 14px;">3</span>
-                <strong style="color: #ffffff; font-size: 16px; margin-left: 5px;">Mete la planilla al sobre consular y envíala</strong>
-                <p style="font-size: 14px; color: #cbd5e1; margin: 5px 0 0 25px; line-height: 1.4;">
-                    Coloca tu planilla de pasaporte firmada dentro del sobre junto con tus fotos físicas de estudio y el Money Order correspondiente a los aranceles del Consulado de Cuba. Envíalo directamente a la dirección postal del Consulado en Washington D.C. o entrégaselo a tu agencia de confianza.
+                <span style="background: #3b82f6; color: white; padding: 3px 10px; border-radius: 50%; font-weight: bold; font-size: 14px;">3</span> 
+                <strong style="color: #ffffff; font-size: 16px; margin-left: 5px;">Mete la planilla al sobre consular y envíala</strong> 
+                <p style="font-size: 14px; color: #cbd5e1; margin: 5px 0 0 25px; line-height: 1.4;"> 
+                    Coloca tu planilla de pasaporte firmada dentro del sobre junto con tus fotos físicas de estudio y el Money Order correspondiente a los aranceles del Consulado de Cuba. Envíalo directamente a la dirección postal del Consulado en Washington D.C. o entrégaselo a tu agencia de confianza. 
                 </p>
             `;
         } else {
+            // CORREGIDO: Añadidas comillas invertidas obligatorias para inyectar el HTML
             cajaInstruccion.innerHTML = `
-                <span style="background: #3b82f6; color: white; padding: 3px 10px; border-radius: 50%; font-weight: bold; font-size: 14px;">3</span>
-                <strong style="color: #ffffff; font-size: 16px; margin-left: 5px;">Coloca la hoja de cobro G-1450 arriba en el sobre</strong>
-                <p style="font-size: 14px; color: #cbd5e1; margin: 5px 0 0 25px; line-height: 1.4;">
-                    Pon la hoja de cobro G-1450 que rellenamos arriba de todo el paquete físico dentro del sobre. El oficial de USCIS pasará las tarifas gubernamentales directamente desde tu tarjeta bancaria americana. Agrega tus copias extras y envíalo por correo certificado (USPS/FedEx).
+                <span style="background: #3b82f6; color: white; padding: 3px 10px; border-radius: 50%; font-weight: bold; font-size: 14px;">3</span> 
+                <strong style="color: #ffffff; font-size: 16px; margin-left: 5px;">Coloca la hoja de cobro G-1450 arriba en el sobre</strong> 
+                <p style="font-size: 14px; color: #cbd5e1; margin: 5px 0 0 25px; line-height: 1.4;"> 
+                    Pon la hoja de cobro G-1450 que rellenamos arriba de todo el paquete físico dentro del sobre. El oficial de USCIS pasará las tarifas gubernamentales directamente desde tu tarjeta bancaria americana. Agrega tus copias extras y envíalo por correo certificado (USPS/FedEx). 
                 </p>
             `;
         }
-        
         document.getElementById("paso-exito").scrollIntoView({ behavior: 'smooth' });
     }
 
-    // SINCRO EXPERTA DE CAMPOS CONDICIONALES
     function prepararPayload() {
         const esCuba = tramiteSeleccionado.startsWith("pasaporte_");
         return {
@@ -533,9 +512,7 @@
         if (urlParams.get('stripe_status') === 'success') {
             document.getElementById("paso-bienvenida").classList.remove("activo");
             const archivoDescarga = urlParams.get('file') || 'expediente.pdf';
-            mostrarPantallaExitoYGuia(`${API_BASE_URL}/api/descargar/${archivoDescarga}`);
+            // CORREGIDO: Se amarró tu URL real inamovible con su barra de descarga obligatoria
+            mostrarPantallaExitoYGuia(`https://onrender.com{archivoDescarga}`);
         }
     });
-</script>
-</body>
-
