@@ -285,11 +285,11 @@
 
         <button class="btn-atras" onclick="regresarAlMenuServicios()">← CAMBIAR DE SERVICIO</button>
     </div>
-    <!-- PASO 4: PANTALLA EXCLUSIVA DE ÉXITO Y GUÍA DE ARMADO POSTAL -->
+    <!-- PASO 4: PANTALLA EXCLUSIVA DE ÉXITO ADAPTABLE -->
     <div id="paso-exito" class="card-blanca seccion-paso">
-        <h3 class="titulo-pantalla" style="color: #4ade80; font-size: 26px;">¡Todo Listo! Tu pago fue completado</h3>
+        <h3 class="titulo-pantalla" style="color: #4ade80; font-size: 26px;">¡Todo Listo! Tu trámite fue procesado</h3>
         <p class="texto-simple" style="text-align: center; font-size: 16px; margin-bottom: 25px;">
-            Tu estatus es lo más importante. La aplicación ya procesó tu información y rellenó tus papeles oficiales con precisión milimétrica.
+            Tu estatus es lo más importante. El sistema ya rellenó tus papeles oficiales con precisión milimétrica.
         </p>
 
         <!-- BOTÓN VERDE DE DESCARGA DINÁMICA -->
@@ -297,16 +297,16 @@
 
         <div style="border-top: 2px dashed #334155; margin: 25px 0;"></div>
 
-        <!-- SECCIÓN DE EXPLICACIONES ULTRA SENCILLAS PARA CAPTURAR -->
+        <!-- SECCIÓN DE EXPLICACIONES SEPARADAS POR SERVICIO -->
         <div id="guia-visual-infantil" style="background: #0f172a; padding: 20px; border-radius: 16px; border: 1px solid #334155;">
-            <h4 style="color: #f59e0b; margin-top: 0; font-size: 18px; text-align: center;">📋 ¿Qué tienes que hacer ahora? (Instrucciones Fáciles)</h4>
+            <h4 style="color: #f59e0b; margin-top: 0; font-size: 18px; text-align: center;">📋 ¿Qué tienes que hacer ahora?</h4>
             <p style="font-size: 13px; color: #94a3b8; text-align: center; margin-top: -5px; margin-bottom: 20px;">Toma una captura de pantalla a esta guía en tu teléfono para no cometer errores.</p>
 
             <div style="margin-top: 15px;">
                 <span style="background: #3b82f6; color: white; padding: 3px 10px; border-radius: 50%; font-weight: bold; font-size: 14px;">1</span>
                 <strong style="color: #ffffff; font-size: 16px; margin-left: 5px;">Imprime tus papeles en hojas blancas</strong>
                 <p style="font-size: 14px; color: #cbd5e1; margin: 5px 0 0 25px; line-height: 1.4;">
-                    Toca el botón verde de arriba para descargar tu archivo completo. Ve a una impresora local e imprímelo todo en papel de oficina común. Asegúrate de que no tenga manchas de tinta.
+                    Toca el botón verde de arriba para descargar tu paquete completo. Ve a una impresora e imprímelo todo en papel de oficina común de tamaño carta. Asegúrate de que no tenga manchas de tinta.
                 </p>
             </div>
 
@@ -314,16 +314,13 @@
                 <span style="background: #3b82f6; color: white; padding: 3px 10px; border-radius: 50%; font-weight: bold; font-size: 14px;">2</span>
                 <strong style="color: #ffffff; font-size: 16px; margin-left: 5px;">Firma a mano usando bolígrafo NEGRO</strong>
                 <p style="font-size: 14px; color: #cbd5e1; margin: 5px 0 0 25px; line-height: 1.4;">
-                    Busca los espacios marcados con la palabra "Signature" (Firma). Escribe tu firma real a mano. <strong>¡Mucho cuidado!</strong> No salgas del recuadro asignado. Si tocas o pisas los bordes con la tinta, el gobierno podría rechazar la planilla.
+                    Busca los espacios marcados para la Firma. Escribe tu firma real a mano. <strong>¡Mucho cuidado!</strong> No te salgas del recuadro asignado ni pises los bordes negros con la tinta, o los oficiales podrían rechazar la planilla.
                 </p>
             </div>
 
-            <div style="margin-top: 15px;">
-                <span style="background: #3b82f6; color: white; padding: 3px 10px; border-radius: 50%; font-weight: bold; font-size: 14px;">3</span>
-                <strong style="color: #ffffff; font-size: 16px; margin-left: 5px;">Mete todo al sobre y envíalo tú mismo</strong>
-                <p style="font-size: 14px; color: #cbd5e1; margin: 5px 0 0 25px; line-height: 1.4;">
-                    Si es trámite USA, coloca la hoja de cobro G-1450 que rellenamos arriba de todo en el sobre físico. El oficial de inmigración pasará las tarifas gubernamentales directamente desde tu tarjeta de banco estadounidense. Agrega tus copias extras y envíalo por correo postal.
-                </p>
+            <!-- INSTRUCCIONES DINÁMICAS DESMEZCLADAS -->
+            <div style="margin-top: 15px;" id="instruccion-envio-dinamica">
+                <!-- Se rellena por JavaScript para no mezclar Cuba con USA -->
             </div>
         </div>
 
@@ -333,13 +330,11 @@
 </div>
 
 <script>
-    // URL ÚNICA Y FIJA DE PRODUCCIÓN PARA SAVE CUBA - PROHIBIDO MODIFICAR
-    const API_BASE_URL = 'https://save-cuba.onrender.com'; 
+    const API_BASE_URL = 'https://onrender.com'; 
 
     let tramiteSeleccionado = "";
     let contadorClicksSecretos = 0;
 
-    // LA MAGIA DE LOS 3 CLICKS PARA DESVELAR EL PANEL INVISIBLE
     function registrarClickSecreto() {
         contadorClicksSecretos++;
         if (contadorClicksSecretos === 3) {
@@ -348,7 +343,7 @@
                 panelSecreto.classList.remove("paso-oculto");
                 alert("🔧 Modo de pruebas activado. Panel secreto visible al final del formulario.");
             }
-            contadorClicksSecretos = 0; // Reiniciar contador
+            contadorClicksSecretos = 0;
         }
     }
 
@@ -396,15 +391,13 @@
         const titulo = document.getElementById("titulo-servicio");
         const cajaPasaporteAnterior = document.getElementById("caja-pasaporte-anterior");
 
-        // El historial de empleo se mantiene universalmente visible para todos los trámites
         document.getElementById("sc_empleo_cuba").style.display = "block";
 
         if (tramiteSeleccionado.startsWith("pasaporte_")) {
             titulo.innerText = "🇨🇺 Trámite: Pasaporte Cubano";
-            bFederal.style.display = "none";     // Esconde el Alien Number
-            bConsular.style.display = "block";    // Muestra Provincia, Año y Número de Pasaporte
+            bFederal.style.display = "none";
+            bConsular.style.display = "block";
             
-            // Si es primera vez, se esconde la caja del pasaporte anterior para no confundir al cliente
             if (tramiteSeleccionado === "pasaporte_primera_vez") {
                 cajaPasaporteAnterior.style.display = "none";
             } else {
@@ -412,16 +405,15 @@
             }
         } else if (tramiteSeleccionado === "paquete_completo_uscis") {
             titulo.innerText = "🇺🇸 Trámite: Residencia Americana";
-            bFederal.style.display = "block";    // Muestra el Alien Number
-            bConsular.style.display = "none";    // Esconde los datos consulares de Cuba
+            bFederal.style.display = "block";
+            bConsular.style.display = "none";
         } else if (tramiteSeleccionado === "naturalizacion_n400") {
             titulo.innerText = "⭐ Trámite: Ciudadanía Americana";
-            bFederal.style.display = "block";    // Muestra el Alien Number
-            bConsular.style.display = "none";    // Esconde los datos consulares de Cuba
+            bFederal.style.display = "block";
+            bConsular.style.display = "none";
         }
     }
 
-    // FLUJO NORMAL: PASARELA DE STRIPE CON CONEXIÓN EN VIVO
     async function solicitarCheckoutStripe() {
         const btn = document.getElementById("btnPagar");
         btn.innerText = "Abriendo pasarela de pago seguro...";
@@ -445,6 +437,53 @@
             btn.disabled = false;
         }
     }
+
+    async function solicitarProcesamientoGratisDev() {
+        const btn = document.getElementById("btnPruebaGratis");
+        btn.innerText = "Validando credenciales de pruebas...";
+        btn.disabled = true;
+        const payload = prepararPayload();
+        payload.dev_username_input = document.getElementById("dev_user").value;
+        payload.dev_password_input = document.getElementById("dev_pass").value;
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/asistente/gratis-dev`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || "Credenciales incorrectas.");
+            }
+            const data = await response.json();
+            
+            mostrarPantallaExitoYGuia(data.archivo_url);
+        } catch (error) {
+            alert("❌ Denegado: " + error.message);
+            btn.innerText = "🚀 VALIDAR CREDENCIALES Y GENERAR GRATIS";
+            btn.disabled = false;
+        }
+    }
+
+    // FUNCIÓN EXPERTA: IMPRIME LAS INSTRUCCIONES CORRECTAS SIN MEZCLAR CUBA CON USA
+    function mostrarPantallaExitoYGuia(archivoUrl) {
+        document.getElementById("paso-formulario").classList.remove("activo");
+        document.getElementById("paso-exito").classList.add("activo");
+        
+        // Inyectar el botón verde de descarga dinámico
+        document.getElementById("caja-descarga-dinamica").innerHTML = `
+            <a href="${archivoUrl}" target="_blank">
+                <button class="btn-accion btn-verde" style="background:#059669; font-size:18px;">📥 DESCARGAR MI DOCUMENTO COMPLETADO</button>
+            </a>
+        `;
+
+        const cajaInstruccion = document.getElementById("instruccion-envio-dinamica");
+        
+        if (tramiteSeleccionado.startsWith("pasaporte_")) {
+            // Instrucción limpia para el Pasaporte de Cuba (Consular)
+            cajaInstruccion.innerHTML = `
+                <span style="background: #3b82f6; color: white; padding: 3px 10px; border-radius: 50%; font-weight: bold; font-size: 14px;">3</span>
+                <strong style="color: #ffffff; font-size: 16px; margin-left: 5px;">Mete la planilla al sobre consular y envíala</strong>
 
     // FLUJO EXCLUSIVO DE DESARROLLADOR: SALTA EL PAGO CON TU CONTRASEÑA DE RENDER
     async function solicitarProcesamientoGratisDev() {
