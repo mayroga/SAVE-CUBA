@@ -1,490 +1,314 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>SAVE CUBA - Simple y Seguro</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AL CIELO - Sistema de Trámites y Asesoría</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-size: 16px;
-            background: #0f172a;
-            color: #f8fafc;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #ffffff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
         }
-        #main-container { width: 100%; max-width: 600px; }
-        
-        .card-blanca {
-            background: #1e293b;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-        
-        .seccion-paso { display: none; }
-        .seccion-paso.activo { display: block; }
-        
-        .titulo-pantalla {
-            font-size: 24px;
-            color: #60a5fa;
-            margin-top: 0;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .texto-simple {
-            font-size: 15px;
-            color: #cbd5e1;
-            line-height: 1.6;
-            text-align: justify;
-        }
-        
-        label {
-            font-size: 14px;
-            color: #94a3b8;
-            display: block;
-            margin-top: 15px;
-            font-weight: 600;
-        }
-        
-        input, select, textarea {
-            width: 100%;
-            padding: 14px;
-            margin-top: 6px;
-            border-radius: 12px;
-            border: 1px solid #475569;
-            background: #0f172a;
-            color: white;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        textarea { resize: none; height: 90px; }
-        
-        .btn-accion {
-            width: 100%;
-            padding: 16px;
-            background: #3b82f6;
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            margin-top: 25px;
-            transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-        .btn-accion:hover { background: #2563eb; transform: translateY(-1px); }
-        
-        .btn-verde { background: #059669; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); }
-        .btn-verde:hover { background: #047857; }
-
-        .btn-atras {
-            background: transparent;
-            border: 1px solid #64748b;
-            color: #cbd5e1;
-            padding: 12px;
-            width: 100%;
-            border-radius: 12px;
-            margin-top: 15px;
-            cursor: pointer;
-            font-size: 15px;
-        }
-
-        .caja-aviso {
-            background: #334155;
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 13px;
-            line-height: 1.5;
-            color: #cbd5e1;
-            margin-bottom: 20px;
-            border-left: 5px solid #f59e0b;
-        }
-
-        .resultado-box {
-            background: #1e293b;
-            border: 1px solid #3b82f6;
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-        .paso-oculto { display: none; }
-
-        /* Estilo para los botones grandes de la pantalla de inicio */
-        .boton-servicio {
-            background: #1e293b;
-            border: 2px solid #3b82f6;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 15px;
-            cursor: pointer;
-            text-align: left;
-            transition: all 0.2s ease;
-            display: block;
-            width: 100%;
-        }
-        .boton-servicio:hover {
-            background: #2563eb;
-            border-color: #60a5fa;
-            transform: translateY(-2px);
-        }
-        .servicio-titulo {
-            font-size: 20px;
-            font-weight: bold;
-            color: #60a5fa;
-            margin: 0 0 5px 0;
-        }
-        .boton-servicio:hover .servicio-titulo { color: #ffffff; }
-        .servicio-descripcion {
-            font-size: 14px;
-            color: #94a3b8;
-            margin: 0;
-            line-height: 1.4;
-        }
-        .boton-servicio:hover .servicio-descripcion { color: #e2e8f0; }
     </style>
 </head>
-<body>
-<div id="main-container">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
 
-    <!-- CABECERA PRINCIPAL CON FUNCIÓN ULTRA SECRETA DE 3 CLICKS -->
-    <div class="card-blanca" style="text-align: center; padding: 15px;">
-        <h2 id="logo-clickable" style="color:#60a5fa; margin:0; font-size: 28px; letter-spacing: 1px; cursor: pointer; user-select: none;" onclick="registrarClickSecreto()">SAVE CUBA</h2>
-        <p style="color: #4ade80; margin: 4px 0 0 0; font-size: 14px; font-weight: bold;">Tus trámites listos, seguros y sin intermediarios</p>
-    </div>
-
-    <!-- PASO 1: PANTALLA DE ENTRADA, CONTROL LEGAL Y DESPERTAR DE RENDER -->
-    <div id="paso-bienvenida" class="card-blanca seccion-paso activo">
-        <h3 class="titulo-pantalla">Cláusula de Protección de Datos y Uso</h3>
-        <div class="caja-aviso">
-            <strong>🔒 PRIVACIDAD TOTAL PARA TU DISPOSITIVO:</strong><br>
-            SAVE CUBA es un sistema informático privado operado por nuestra LLC. No guardamos, recolectamos ni almacenamos tus datos personales ni tus números bancarios en ningún servidor. Toda tu información se queda guardada únicamente en la memoria de tu propio teléfono o computadora.
+    <!-- HEADER / BARRA DE NAVEGACIÓN -->
+    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <span class="text-xl font-bold tracking-wider text-sky-400">AL CIELO</span>
+                <span class="text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded">Asesoría Profesional</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="cambiarIdioma('es')" id="btn-es" class="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-200 transition">Español</button>
+                <button onclick="cambiarIdioma('en')" id="btn-en" class="px-3 py-1 text-sm bg-sky-600 hover:bg-sky-500 rounded text-white transition">English</button>
+            </div>
         </div>
-        <p class="texto-simple">
-            Nuestra LLC no es una firma de abogados, no somos notarios ni tramitadores públicos. No cobramos dinero por enviar tus papeles al gobierno, ni realizamos gestiones migratorias ante USCIS o consulados. Solo vendemos un software automatizado de llenado y traducción fiel de formularios públicos de distribución gratuita.
-        </p>
-        <p class="texto-simple" style="font-weight: bold; color: #60a5fa; text-align: center;">
-            Al presionar el botón verde de abajo, confirmas que comprendes y aceptas estas condiciones bajo tu propia cuenta y supervisión.
-        </p>
-        <button class="btn-accion btn-verde" onclick="despertarServidorYContinuar()">ACEPTO LOS TÉRMINOS Y DESEO INICIAR</button>
-    </div>
+    </header>
 
-    <!-- PASO 2: MENÚ DE SERVICIOS EN ESPAÑOL CLARO -->
-    <div id="pantalla-inicio" class="seccion-paso">
-        <p style="text-align: center; color: #94a3b8; margin-top: 0; margin-bottom: 20px; font-size: 16px;">
-            Toca el botón del papel que necesitas arreglar hoy:
-        </p>
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-grow max-w-4xl mx-auto px-4 py-8 w-full">
         
-        <button class="boton-servicio" onclick="irAlFormulario('paquete_completo_uscis')">
-            <div class="servicio-titulo">🇺🇸 1. Pedir la Residencia por Ley de Ajuste</div>
-            <div class="servicio-descripcion">
-                Elige esta opción si eres cubano, ya llevas un año en Estados Unidos y quieres pedir tu Residencia Permanente Legal. 
-                <br><strong style="color: #4ade80;">★ Incluye:</strong> Tu Permiso de Trabajo (I-765) de forma conjunta.
-            </div>
-        </button>
-
-        <button class="boton-servicio" onclick="irAlFormulario('pasaporte_cubano')">
-            <div class="servicio-titulo">🇨🇺 2. Renovar o Prorrogar mi Pasaporte Cubano</div>
-            <div class="servicio-descripcion">
-                Elige esta opción si tu pasaporte de Cuba ya se venció o si necesitas ponerle la prórroga obligatoria de dos años para poder viajar o hacer trámites consulares desde Miami.
-            </div>
-        </button>
-
-        <button class="boton-servicio" onclick="irAlFormulario('naturalizacion_n400')">
-            <div class="servicio-titulo">⭐ 3. Hacerse Ciudadano Americano</div>
-            <div class="servicio-descripcion">
-                Elige esta opción si ya eres Residente Permanente desde hace varios años y estás listo para hacer el examen de la Ciudadanía de Estados Unidos.
-            </div>
-        </button>
-    </div>
-
-    <!-- PASO 3: FORMULARIO INTERACTIVO ADAPTABLE -->
-    <div id="paso-formulario" class="card-blanca seccion-paso">
-        <h3 class="titulo-pantalla" id="titulo-servicio">Rellena tus Datos</h3>
-        <p style="font-size: 13px; color: #4ade80; text-align: center; margin-top: -10px; font-weight: bold;" id="alerta-recuerdo"></p>
-
-        <label>Primer Nombre:</label>
-        <input type="text" id="sc_nombre1" placeholder="Ej: Juan" oninput="guardarDatoLocal('sc_nombre1', this.value)">
-        <label>Segundo Nombre (Si no tienes, déjalo vacío):</label>
-        <input type="text" id="sc_nombre2" placeholder="Ej: Carlos" oninput="guardarDatoLocal('sc_nombre2', this.value)">
-
-        <label>Primer Apellido:</label>
-        <input type="text" id="sc_apellido1" placeholder="Ej: Pérez" oninput="guardarDatoLocal('sc_apellido1', this.value)">
-
-        <label>Segundo Apellido (Si no tienes, déjalo vacío):</label>
-        <input type="text" id="sc_apellido2" placeholder="Ej: Rodríguez" oninput="guardarDatoLocal('sc_apellido2', this.value)">
-
-        <label>Fecha de Nacimiento:</label>
-        <input type="date" id="sc_fecha_nacimiento" oninput="guardarDatoLocal('sc_fecha_nacimiento', this.value)">
-
-        <!-- CAMPOS EXCLUSIVOS PARA INMIGRACIÓN USA (RESIDENCIA / TRABAJO / CIUDADANÍA) -->
-        <div id="bloque-federal">
-            <label>Número de Extranjero / Alien Registration Number (9 números enteros):</label>
-            <input type="text" id="sc_anumber" placeholder="Ej: 123456789" maxlength="9" oninput="guardarDatoLocal('sc_anumber', this.value)">
-
-            <label>Último empleo o estudios en Cuba (Escríbelo en Español, la IA corregirá la ortografía y lo traducirá):</label>
-            <textarea id="sc_empleo_cuba" placeholder="Ej: Trabajé en La Habana como chofer y albañil por cuenta propia." oninput="guardarDatoLocal('sc_empleo_cuba', this.value)"></textarea>
-        </div>
-
-        <!-- CAMPOS EXCLUSIVOS PARA PASAPORTE CUBANO -->
-        <div id="bloque-consular">
-            <label>Número de Pasaporte Cubano Actual:</label>
-            <input type="text" id="sc_pasaporte_num" placeholder="Ej: H123456" oninput="guardarDatoLocal('sc_pasaporte_num', this.value)">
-
-            <label>Provincia de Origen en Cuba:</label>
-            <input type="text" id="sc_provincia" placeholder="Ej: Camagüey" oninput="guardarDatoLocal('sc_provincia', this.value)">
-
-            <label>Año de salida de Cuba:</label>
-            <input type="text" id="sc_ano_salida" placeholder="Ej: 2021" maxlength="4" oninput="guardarDatoLocal('sc_ano_salida', this.value)">
-        </div>
-
-        <!-- BOTÓN MAESTRO DE COBRO CON STRIPE -->
-        <button id="btnPagar" class="btn-accion btn-verde" onclick="solicitarCheckoutStripe()">💳 PROCESAR Y PAGAR MI TRÁMITE</button>
-
-        <!-- PANEL ULTRA SECRETO PARA PRUEBAS GRATIS (SÓLO SALE CON 3 CLICS EN EL TÍTULO "SAVE CUBA") -->
-        <div id="bloque-secreto-dev" class="paso-oculto" style="background: #0f172a; padding: 15px; border-radius: 12px; border: 1px dashed #ef4444; margin-top: 20px;">
-            <p style="font-size: 13px; color: #f59e0b; margin: 0 0 10px 0; font-weight: bold; text-align: center;">🔧 Modo Desarrollador: Descarga Gratis para Pruebas</p>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="dev_user" placeholder="Usuario" style="margin-top:0; padding: 10px; font-size: 14px;">
-                <input type="password" id="dev_pass" placeholder="Contraseña" style="margin-top:0; padding: 10px; font-size: 14px;">
-            </div>
-            <button id="btnPruebaGratis" class="btn-accion" style="margin-top: 12px; background: #475569; padding: 12px; font-size: 15px;" onclick="solicitarProcesamientoGratisDev()">
-                🚀 VALIDAR CREDENCIALES Y GENERAR GRATIS
-            </button>
-        </div>
-
-        <button class="btn-atras" onclick="regresarAlMenuServicios()">← CAMBIAR DE SERVICIO</button>
-    </div>
-
-    <!-- PANTALLA EXCLUSIVA DE ÉXITO Y GUÍA ADAPTABLE (FÁCIL DE CAPTURAR CON EL TELÉFONO) -->
-    <div id="paso-exito" class="card-blanca seccion-paso">
-        <h3 class="titulo-pantalla" style="color: #4ade80; font-size: 26px;">¡Todo Listo! Tu pago fue completado</h3>
-        <p class="texto-simple" style="text-align: center; font-size: 16px; margin-bottom: 25px;">
-            Tu estatus es lo más importante. La aplicación ya tradujo tu información al inglés oficial y rellenó tus papeles gubernamentales con precisión milimétrica.
-        </p>
-
-        <!-- BOTÓN VERDE DE DESCARGA DINÁMICA -->
-        <div id="caja-descarga-dinamica" style="margin-bottom: 25px;"></div>
-
-        <div style="border-top: 2px dashed #334155; margin: 25px 0;"></div>
-
-        <!-- SECCIÓN DE EXPLICACIONES ULTRA SENCILLAS PARA CAPTURAR -->
-        <div id="guia-visual-infantil" style="background: #0f172a; padding: 20px; border-radius: 16px; border: 1px solid #334155;">
-            <h4 style="color: #f59e0b; margin-top: 0; font-size: 18px; text-align: center;">📋 ¿Qué tienes que hacer ahora? (Instrucciones Fáciles)</h4>
-            <p style="font-size: 13px; color: #94a3b8; text-align: center; margin-top: -5px; margin-bottom: 20px;">Toma una captura de pantalla o foto a esta guía en tu teléfono para no cometer errores.</p>
-
-            <div style="margin-top: 15px;">
-                <span style="background: #3b82f6; color: white; padding: 3px 10px; border-radius: 50%; font-weight: bold; font-size: 14px;">1</span>
-                <strong style="color: #ffffff; font-size: 16px; margin-left: 5px;">Imprime tus papeles en hojas blancas</strong>
-                <p style="font-size: 14px; color: #cbd5e1; margin: 5px 0 0 25px; line-height: 1.4;">
-                    Toca el botón verde de arriba para descargar tu archivo completo. Ve a una impresora local e imprímelo todo en papel de oficina común. Asegúrate de que no tenga manchas de tinta.
-                </p>
+        <!-- SECCIÓN DE SELECCIÓN DE TRÁMITE -->
+        <section id="seccion-seleccion" class="space-y-6">
+            <div class="text-center space-y-2">
+                <h1 class="text-3xl font-bold text-white" data-translate="titulo_principal">Seleccione su Trámite Oficial</h1>
+                <p class="text-slate-400" data-translate="subtitulo_principal">Complete los datos de forma segura para autocomplentar sus planillas.</p>
             </div>
 
-            <div style="margin-top: 15px;">
-                <span style="background: #3b82f6; color: white; padding: 3px 10px; border-radius: 50%; font-weight: bold; font-size: 14px;">2</span>
-                <strong style="color: #ffffff; font-size: 16px; margin-left: 5px;">Firma a mano usando bolígrafo NEGRO</strong>
-                <p style="font-size: 14px; color: #cbd5e1; margin: 5px 0 0 25px; line-height: 1.4;">
-                    Busca los espacios marcados con la palabra "Signature" (Firma). Escribe tu firma real a mano. **¡Mucho cuidado!** No salgas del recuadro negro asignado. Si tocas o pisas los bordes con la tinta, el gobierno podría rechazar la planilla.
-                </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <button onclick="irAlFormulario('paquete_completo_uscis')" class="p-6 bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-sky-500 rounded-xl text-left transition space-y-3 group">
+                    <div class="text-sky-400 font-semibold text-lg group-hover:text-sky-300">Residencia y Trabajo (USCIS)</div>
+                    <p class="text-sm text-slate-400">Incluye formularios G-1450, I-485 e I-765 con autollenado completo.</p>
+                </button>
+
+                <button onclick="irAlFormulario('pasaporte_cubano')" class="p-6 bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-sky-500 rounded-xl text-left transition space-y-3 group">
+                    <div class="text-sky-400 font-semibold text-lg group-hover:text-sky-300">Pasaporte Cubano Consular</div>
+                    <p class="text-sm text-slate-400">Generación de planilla consular oficial en idioma español.</p>
+                </button>
+
+                <button onclick="irAlFormulario('naturalizacion_n400')" class="p-6 bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-sky-500 rounded-xl text-left transition space-y-3 group">
+                    <div class="text-sky-400 font-semibold text-lg group-hover:text-sky-300">Ciudadanía Americana (N-400)</div>
+                    <p class="text-sm text-slate-400">Incluye formularios G-1450 y N-400 listos para revisión y firma.</p>
+                </button>
+            </div>
+        </section>
+
+        <!-- SECCIÓN DE FORMULARIO DINÁMICO -->
+        <section id="seccion-formulario" class="hidden bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-xl space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+                <h2 id="titulo-tramite-activo" class="text-xl font-bold text-sky-400">Formulario de Trámite</h2>
+                <button onclick="volverSeleccion()" class="text-sm text-slate-400 hover:text-white transition">← Volver</button>
             </div>
 
-            <div style="margin-top: 15px;">
-                <span style="background: #3b82f6; color: white; padding: 3px 10px; border-radius: 50%; font-weight: bold; font-size: 14px;">3</span>
-                <strong style="color: #ffffff; font-size: 16px; margin-left: 5px;">Mete todo al sobre y envíalo tú mismo</strong>
-                <p style="font-size: 14px; color: #cbd5e1; margin: 5px 0 0 25px; line-height: 1.4;">
-                    Coloca la hoja de cobro G-1450 que rellenamos arriba de todo en el sobre físico. El oficial de inmigración pasará las tarifas gubernamentales directamente desde tu tarjeta de banco estadounidense. Agrega tus copias extras y envíalo por correo postal.
-                </p>
+            <form id="form-tramite" onsubmit="enviarTramite(event)" class="space-y-4">
+                <input type="hidden" id="tramite_tipo" name="tramite_tipo">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Primer Nombre *</label>
+                        <input type="text" id="primer_nombre" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Segundo Nombre</label>
+                        <input type="text" id="segundo_nombre" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Primer Apellido *</label>
+                        <input type="text" id="primer_apellido" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Segundo Apellido</label>
+                        <input type="text" id="segundo_apellido" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Fecha de Nacimiento *</label>
+                        <input type="date" id="fecha_nacimiento" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div id="campo-anumber-container">
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Alien Registration Number (A-Number)</label>
+                        <input type="text" id="anumber" placeholder="Ej: A123456789" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+
+                <!-- Campos dinámicos adicionales -->
+                <div id="campos-dinamicos-adicionales" class="space-y-4">
+                    <div id="div-pasaporte" class="hidden">
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Número de Pasaporte *</label>
+                        <input type="text" id="pasaporte_actual" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div id="div-cuba" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Provincia de Origen en Cuba *</label>
+                            <input type="text" id="provincia_cuba" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Año de Salida de Cuba *</label>
+                            <input type="text" id="ano_salida_cuba" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Último empleo u ocupación *</label>
+                        <input type="text" id="empleo_cuba_espanol" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end space-x-3">
+                    <button type="button" onclick="limpiarFormulario()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-slate-200 transition">Borrar</button>
+                    <button type="submit" class="px-6 py-2 bg-sky-600 hover:bg-sky-500 font-semibold rounded text-white transition">Generar Planilla PDF</button>
+                </div>
+            </form>
+        </section>
+
+    </main>
+    <!-- SECCIÓN DE CARGA / PROCESAMIENTO -->
+        <section id="seccion-carga" class="hidden text-center py-16 space-y-6 bg-slate-800 border border-slate-700 rounded-xl shadow-xl">
+            <div class="flex justify-center">
+                <div class="loading-spinner"></div>
             </div>
-        </div>
+            <div class="space-y-2">
+                <h3 class="text-xl font-bold text-white">Procesando y Autocompletando Planillas...</h3>
+                <p class="text-slate-400 text-sm">Nuestro motor de asesoría está rellenando sus documentos oficiales de forma segura.</p>
+            </div>
+        </section>
 
-        <button class="btn-atras" style="margin-top: 30px;" onclick="location.reload()">INICIAR OTRO SERVICIO</button>
-    </div>
-
-</div>
-
-<script>
-    // URL ÚNICA Y FIJA DE PRODUCCIÓN PARA SAVE CUBA - PROHIBIDO MODIFICAR
-    const API_BASE_URL = 'https://save-cuba.onrender.com'; 
-
-    let tramiteSeleccionado = "";
-    let contadorClicksSecretos = 0;
-
-    // LA MAGIA DE LOS 3 CLICKS PARA DESVELAR EL PANEL INVISIBLE
-    function registrarClickSecreto() {
-        contadorClicksSecretos++;
-        if (contadorClicksSecretos === 3) {
-            const panelSecreto = document.getElementById("bloque-secreto-dev");
-            if(panelSecreto) {
-                panelSecreto.classList.remove("paso-oculto");
-                alert("🔧 Modo de pruebas activado. Panel secreto visible al final del formulario.");
-            }
-            contadorClicksSecretos = 0; // Reiniciar contador
-        }
-    }
-
-    function despertarServidorYContinuar() {
-        fetch(`${API_BASE_URL}/health`).catch(() => console.log("Despertando servidor..."));
-        document.getElementById("paso-bienvenida").classList.remove("activo");
-        document.getElementById("pantalla-inicio").classList.add("activo");
-    }
-
-    function irAlFormulario(tipoTramite) {
-        tramiteSeleccionado = tipoTramite;
-        document.getElementById("pantalla-inicio").classList.remove("activo");
-        document.getElementById("paso-formulario").classList.add("activo");
-        
-        verificarDatosLocalesExistentes();
-        adaptarCamposFormulario();
-    }
-
-    function regresarAlMenuServicios() {
-        document.getElementById("paso-formulario").classList.remove("activo");
-        document.getElementById("pantalla-inicio").classList.add("activo");
-    }
-
-    function guardarDatoLocal(clave, valor) {
-        localStorage.setItem(clave, valor);
-    }
-
-    function verificarDatosLocalesExistentes() {
-        const campos = ['sc_nombre1', 'sc_nombre2', 'sc_apellido1', 'sc_apellido2', 'sc_fecha_nacimiento', 'sc_anumber', 'sc_empleo_cuba', 'sc_pasaporte_num', 'sc_provincia', 'sc_ano_salida'];
-        let encontrado = false;
-
-        campos.forEach(id => {
-            const valorGuardado = localStorage.getItem(id);
-            if (valorGuardado) {
-                document.getElementById(id).value = valorGuardado;
-                encontrado = true;
-            }
-        });
-
-        if (encontrado) {
-            document.getElementById("alerta-recuerdo").innerText = "✨ Tu teléfono recordó tus datos de forma local. ¡Listo para tu próximo servicio!";
-        }
-    }
-
-    function adaptarCamposFormulario() {
-        tramiteSeleccionado = document.getElementById("sc_tipo_tramite").value;
-        const bFederal = document.getElementById("bloque-federal");
-        const bConsular = document.getElementById("bloque-consular");
-        const titulo = document.getElementById("titulo-servicio");
-
-        // Forzar a que la caja de empleo siempre esté visible en la pantalla
-        document.getElementById("sc_empleo_cuba").style.display = "block";
-
-        if (tramiteSeleccionado === "pasaporte_cubano") {
-            titulo.innerText = "🇨🇺 Trámite: Pasaporte Cubano";
-            bFederal.style.display = "none";     // Esconde el Alien Number
-            bConsular.style.display = "block";    // Muestra Provincia, Año y Número de Pasaporte
-        } else if (tramiteSeleccionado === "paquete_completo_uscis") {
-            titulo.innerText = "🇺🇸 Trámite: Residencia Americana";
-            bFederal.style.display = "block";    // Muestra el Alien Number
-            bConsular.style.display = "none";    // Esconde los datos de Cuba
-        } else if (tramiteSeleccionado === "naturalizacion_n400") {
-            titulo.innerText = "⭐ Trámite: Ciudadanía Americana";
-            bFederal.style.display = "block";    // Muestra el Alien Number
-            bConsular.style.display = "none";    // Esconde los datos de Cuba
-        }
-    }
-
-    // FLUJO NORMAL: PASARELA DE STRIPE CON CONEXIÓN EN VIVO
-    async function solicitarCheckoutStripe() {
-        const btn = document.getElementById("btnPagar");
-        btn.innerText = "Abriendo pasarela de pago seguro...";
-        btn.disabled = true;
-        const payload = prepararPayload();
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/stripe/checkout`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.detail || "Revisa las casillas obligatorias.");
-            }
-            const data = await response.json();
-            window.location.href = data.stripe_checkout_url;
-        } catch (error) {
-            alert("❌ Alerta del Sistema: " + error.message);
-            btn.innerText = "💳 PROCESAR Y PAGAR MI TRÁMITE";
-            btn.disabled = false;
-        }
-    }
-
-    // FLUJO EXCLUSIVO DE DESARROLLADOR: SALTA EL PAGO CON TU CONTRASEÑA DE RENDER
-    async function solicitarProcesamientoGratisDev() {
-        const btn = document.getElementById("btnPruebaGratis");
-        btn.innerText = "Validando credenciales de pruebas...";
-        btn.disabled = true;
-        const payload = prepararPayload();
-        payload.dev_username_input = document.getElementById("dev_user").value;
-        payload.dev_password_input = document.getElementById("dev_pass").value;
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/asistente/gratis-dev`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.detail || "Credenciales incorrectas.");
-            }
-            const data = await response.json();
-            
-            document.getElementById("paso-formulario").classList.remove("activo");
-            document.getElementById("paso-exito").classList.add("activo");
-            document.getElementById("caja-descarga-dinamica").innerHTML = `
-                <a href="${data.archivo_url}" target="_blank">
-                    <button class="btn-accion btn-verde" style="background:#059669; font-size:18px;">📥 DESCARGAR PAQUETE DE PRUEBA GRATIS</button>
+        <!-- SECCIÓN DE RESULTADO Y DESCARGA -->
+        <section id="seccion-resultado" class="hidden bg-slate-800 border border-slate-700 rounded-xl p-8 shadow-xl text-center space-y-6">
+            <div class="w-16 h-16 bg-emerald-600/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
+            <div class="space-y-2">
+                <h3 class="text-2xl font-bold text-white">¡Planilla Generada con Éxito!</h3>
+                <p class="text-slate-400 text-sm">Sus documentos han sido autocompletados correctamente y están listos para su revisión final, firma y pago.</p>
+            </div>
+            <div class="pt-4 flex flex-col sm:flex-row justify-center gap-4">
+                <a id="link-descarga" href="#" target="_blank" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 font-semibold rounded-lg text-white transition flex items-center justify-center space-x-2">
+                    <span>Descargar PDF Completo</span>
                 </a>
-            `;
-            document.getElementById("paso-exito").scrollIntoView({ behavior: 'smooth' });
-        } catch (error) {
-            alert("❌ Denegado: " + error.message);
-            btn.innerText = "🚀 VALIDAR CREDENCIALES Y GENERAR GRATIS";
-            btn.disabled = false;
-        }
-    }
+                <button onclick="reiniciarSistema()" class="px-6 py-3 bg-slate-700 hover:bg-slate-600 font-semibold rounded-lg text-slate-200 transition">Realizar Otro Trámite</button>
+            </div>
+        </section>
 
-    // REVISIÓN EXPERTA: Sincroniza y envía los valores correctos de forma limpia
-    function prepararPayload() {
-        return {
-            tramite_tipo: tramiteSeleccionado,
-            primer_nombre: document.getElementById("sc_nombre1").value,
-            segundo_nombre: document.getElementById("sc_nombre2").value,
-            primer_apellido: document.getElementById("sc_apellido1").value,
-            segundo_apellido: document.getElementById("sc_apellido2").value,
-            fecha_nacimiento: document.getElementById("sc_fecha_nacimiento").value,
-            empleo_cuba_espanol: document.getElementById("sc_empleo_cuba").value, // Campo Universal visible
-            anumber: tramiteSeleccionado !== "pasaporte_cubano" ? document.getElementById("sc_anumber").value : "",
-            pasaporte_actual: tramiteSeleccionado === "pasaporte_cubano" ? document.getElementById("sc_pasaporte_num").value : "",
-            provincia_cuba: tramiteSeleccionado === "pasaporte_cubano" ? document.getElementById("sc_provincia").value : "",
-            ano_salida_cuba: tramiteSeleccionado === "pasaporte_cubano" ? document.getElementById("sc_ano_salida").value : ""
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-800 border-t border-slate-700 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400 space-y-1">
+            <p>AL CIELO - Plataforma de Asesoría Profesional y Generación Documental.</p>
+            <p>El alcance legal de nuestro servicio se limita a la asesoría y preparación de formularios oficiales.</p>
+        </div>
+    </footer>
+    <!-- SCRIPT DE FUNCIONALIDAD -->
+    <script>
+        const API_BASE_URL = window.location.origin;
+        let tramiteSeleccionado = "";
+        let idiomaActual = "en";
+
+        const traducciones = {
+            en: {
+                titulo_principal: "Select Your Official Application",
+                subtitulo_principal: "Complete your information securely to auto-fill your forms.",
+                btn_borrar: "Clear",
+                btn_generar: "Generate PDF Form"
+            },
+            es: {
+                titulo_principal: "Seleccione su Trámite Oficial",
+                subtitulo_principal: "Complete los datos de forma segura para autocomplentar sus planillas.",
+                btn_borrar: "Borrar",
+                btn_generar: "Generar Planilla PDF"
+            }
         };
-    }
 
-    window.addEventListener('load', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('stripe_status') === 'success') {
-            document.getElementById("paso-bienvenida").classList.remove("activo");
-            document.getElementById("paso-exito").classList.add("activo");
-            const archivoDescarga = urlParams.get('file') || 'expediente.pdf';
-            document.getElementById("caja-descarga-dinamica").innerHTML = `
-                <a href="${API_BASE_URL}/api/descargar/${archivoDescarga}" target="_blank">
-                    <button class="btn-accion btn-verde" style="background:#059669; font-size:18px;">📥 DESCARGAR EXPEDIENTE COMPLETO</button>
-                </a>
-            `;
-            document.getElementById("paso-exito").scrollIntoView({ behavior: 'smooth' });
+        function cambiarIdioma(lang) {
+            idiomaActual = lang;
+            document.getElementById('btn-es').className = lang === 'es' ? 'px-3 py-1 text-sm bg-sky-600 rounded text-white transition' : 'px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-200 transition';
+            document.getElementById('btn-en').className = lang === 'en' ? 'px-3 py-1 text-sm bg-sky-600 rounded text-white transition' : 'px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-200 transition';
+            
+            document.querySelectorAll('[data-translate]').forEach(el => {
+                const key = el.getAttribute('data-translate');
+                if (traducciones[lang][key]) {
+                    el.innerText = traducciones[lang][key];
+                }
+            });
         }
-    });
-</script>
+
+        function irAlFormulario(tipo) {
+            tramiteSeleccionado = tipo;
+            document.getElementById('tramite_tipo').value = tipo;
+            
+            document.getElementById('seccion-seleccion').classList.add('hidden');
+            document.getElementById('seccion-formulario').classList.remove('hidden');
+
+            const containerAnumber = document.getElementById('campo-anumber-container');
+            const divPasaporte = document.getElementById('div-pasaporte');
+            const divCuba = document.getElementById('div-cuba');
+            const tituloTramite = document.getElementById('titulo-tramite-activo');
+
+            // Configurar visibilidad de campos según el trámite
+            containerAnumber.classList.add('hidden');
+            divPasaporte.classList.add('hidden');
+            divCuba.classList.add('hidden');
+
+            document.getElementById('anumber').required = false;
+            document.getElementById('pasaporte_actual').required = false;
+            document.getElementById('provincia_cuba').required = false;
+            document.getElementById('ano_salida_cuba').required = false;
+
+            if (tipo === 'paquete_completo_uscis') {
+                tituloTramite.innerText = "Residencia y Trabajo (USCIS)";
+                containerAnumber.classList.remove('hidden');
+                document.getElementById('anumber').required = true;
+            } else if (tipo === 'pasaporte_cubano') {
+                tituloTramite.innerText = "Pasaporte Cubano Consular";
+                divPasaporte.classList.remove('hidden');
+                divCuba.classList.remove('hidden');
+                document.getElementById('pasaporte_actual').required = true;
+                document.getElementById('provincia_cuba').required = true;
+                document.getElementById('ano_salida_cuba').required = true;
+            } else if (tipo === 'naturalizacion_n400') {
+                tituloTramite.innerText = "Ciudadanía Americana (N-400)";
+                containerAnumber.classList.remove('hidden');
+                document.getElementById('anumber').required = true;
+            }
+        }
+
+        function volverSeleccion() {
+            document.getElementById('seccion-formulario').classList.add('hidden');
+            document.getElementById('seccion-seleccion').classList.remove('hidden');
+            limpiarFormulario();
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('form-tramite').reset();
+            document.getElementById('tramite_tipo').value = tramiteSeleccionado;
+        }
+
+        async function enviarTramite(event) {
+            event.preventDefault();
+
+            const datos = {
+                tramite_tipo: tramiteSeleccionado,
+                primer_nombre: document.getElementById('primer_nombre').value,
+                segundo_nombre: document.getElementById('segundo_nombre').value || null,
+                primer_apellido: document.getElementById('primer_apellido').value,
+                segundo_apellido: document.getElementById('segundo_apellido').value || null,
+                fecha_nacimiento: document.getElementById('fecha_nacimiento').value,
+                anumber: document.getElementById('anumber').value || null,
+                pasaporte_actual: document.getElementById('pasaporte_actual').value || null,
+                provincia_cuba: document.getElementById('provincia_cuba').value || null,
+                ano_salida_cuba: document.getElementById('ano_salida_cuba').value || null,
+                empleo_cuba_espanol: document.getElementById('empleo_cuba_espanol').value || null
+            };
+
+            document.getElementById('seccion-formulario').classList.add('hidden');
+            document.getElementById('seccion-carga').classList.remove('hidden');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/procesar-tramite`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(datos)
+                });
+
+                const resultado = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(resultado.detail || 'Error al procesar la solicitud.');
+                }
+
+                document.getElementById('link-descarga').setAttribute('href', `${API_BASE_URL}${resultado.download_url}`);
+                
+                document.getElementById('seccion-carga').classList.add('hidden');
+                document.getElementById('seccion-resultado').classList.remove('hidden');
+
+            } catch (error) {
+                alert("Error: " + error.message);
+                document.getElementById('seccion-carga').classList.add('hidden');
+                document.getElementById('seccion-formulario').classList.remove('hidden');
+            }
+        }
+
+        function reiniciarSistema() {
+            document.getElementById('seccion-resultado').classList.add('hidden');
+            document.getElementById('seccion-seleccion').classList.remove('hidden');
+            limpiarFormulario();
+        }
+    </script>
+</body>
+</html>
