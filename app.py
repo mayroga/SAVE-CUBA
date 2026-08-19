@@ -168,7 +168,6 @@ def traducir_historial_laboral_ia(texto_espanol: str) -> str:
 # INYECTOR MECÁNICO DE ARCHIVOS PDF (ACROFORMS)
 # =====================================================================
 def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_salida: str) -> str:
-    # Si el nombre ya empieza con "plantilla_", lo deja igual. Si no, se lo agrega de forma pareja.
     if nombre_plantilla.startswith("plantilla_"):
         nombre_con_prefijo = nombre_plantilla
     else:
@@ -177,7 +176,6 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
     ruta_input = os.path.join(PLANTILLAS_DIR, nombre_con_prefijo)
     ruta_output = os.path.join(SALIDAS_DIR, nombre_salida)
     
-    # Alerta de seguridad limpia si falta el papel en tu repositorio de GitHub
     if not os.path.exists(ruta_input):
         raise HTTPException(
             status_code=500, 
@@ -189,8 +187,26 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
         writer = PdfWriter()
         writer.append(reader)
         
-        # Inyección mecánica exacta sobre las casillas oficiales del gobierno
+        # 👑 TRUCO DE INGENIERÍA 1: Forzar al visor de PDF a mostrar las letras inyectadas
+        try:
+            if "/AcroForm" in writer._root_object:
+                writer._root_object["/AcroForm"].update({
+                    "/NeedAppearances": True
+                })
+        except Exception:
+            pass
+
+        # 👑 TRUCO DE INGENIERÍA 2: Inyectar datos en los campos con índices estrictos de Adobe
         writer.update_page_form_field_values(writer.pages, datos_mapeados)
+        
+        # 👑 TRUCO DE INGENIERÍA 3: Activar las banderas de visualización en cada campo para evitar hojas vacías
+        for page in writer.pages:
+            if "/Annots" in page:
+                for annot in page["/Annots"]:
+                    obj = annot.get_object()
+                    if obj.get("/Subtype") == "/Widget":
+                        # Forzar la bandera de visibilidad del campo de texto
+                        obj.update({"/F": 4}) 
         
         with open(ruta_output, "wb") as f:
             writer.write(f)
@@ -198,6 +214,7 @@ def rellenar_planilla_pdf(nombre_plantilla: str, datos_mapeados: dict, nombre_sa
         return ruta_output
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error mecánico al rellenar el PDF: {str(e)}")
+
 # =====================================================================
 # MOTOR SEPARADOR Y EJECUTOR DE TRÁMITES (AISLAMIENTO TOTAL Y MAPEO)
 # =====================================================================
