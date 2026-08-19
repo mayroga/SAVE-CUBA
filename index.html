@@ -25,17 +25,18 @@
 
 <div class="container">
     <h1>Asistente Consular</h1>
-    <p class="subtitle">Validación y Preparación de Documentos</p>
+    <p class="subtitle">Preparación de Papelería Oficial Garantizada</p>
 
     <div id="formulario">
-        <!-- BLOQUE 1 -->
+        <!-- PASO 1 -->
         <div class="step active" id="step-1">
-            <div class="alert-box">⚠️ ATENCIÓN: Escriba sin faltas graves. El sistema limpia ortografía automáticamente.</div>
-            <label>Seleccione el Trámite:</label>
+            <div class="alert-box">🇲🇽 CERO ERRORES: Ingrese sus datos exactamente como aparecen en sus documentos oficiales.</div>
+            
+            <label>Seleccione el Trámite Consular:</label>
             <select id="tipo_tramite" onchange="actualizarEtiquetasExtra()">
                 <option value="pasaporte">Pasaporte Mexicano</option>
                 <option value="matricula">Matrícula Consular</option>
-                <option value="registro">Registro de Nacimiento (Hijos)</option>
+                <option value="registro">Registro de Nacimiento (Doble Nacionalidad)</option>
             </select>
 
             <label>Primer Nombre (Obligatorio):</label>
@@ -50,7 +51,7 @@
             </div>
         </div>
 
-        <!-- BLOQUE 2 -->
+        <!-- PASO 2 (Con botón Atrás) -->
         <div class="step" id="step-2">
             <label>Apellido Paterno (Obligatorio):</label>
             <input type="text" id="primer_apellido" placeholder="Ej. PÉREZ">
@@ -64,12 +65,12 @@
             </div>
         </div>
 
-        <!-- BLOQUE 3 -->
+        <!-- PASO 3 (Con botón Atrás) -->
         <div class="step" id="step-3">
             <label>Fecha de Nacimiento (Obligatorio):</label>
             <input type="date" id="fecha_nacimiento">
             
-            <label>Estado o Lugar de Nacimiento (Obligatorio):</label>
+            <label>Estado o Lugar de Nacimiento en México (Obligatorio):</label>
             <input type="text" id="lugar_nacimiento" placeholder="Ej. JALISCO">
             
             <div class="buttons">
@@ -78,33 +79,33 @@
             </div>
         </div>
 
-        <!-- BLOQUE 4: Doble Verificación -->
+        <!-- PASO 4 (Con botón Atrás) -->
         <div class="step" id="step-4">
-            <div class="alert-box">🚨 ALERTA DE DOBLE VERIFICACIÓN: Revise sus datos antes de generar. Un error impedirá su trámite.</div>
+            <div class="alert-box">🚨 VERIFICACIÓN FINAL: Incluya calle, número, ciudad, estado y Código Postal (Zip Code).</div>
             
-            <label>Dirección Actual en EE. UU. (Obligatorio):</label>
-            <input type="text" id="direccion_usa" placeholder="Ej. 123 MAIN ST, MIAMI FL">
+            <label>Dirección Actual en EE. UU. (Con Código Postal):</label>
+            <input type="text" id="direccion_usa" placeholder="Ej. 123 MAIN ST, MIAMI FL 33101">
             
-            <label>Teléfono de Contacto (Obligatorio):</label>
+            <label>Teléfono de Contacto (10 dígitos):</label>
             <input type="text" id="telefono" placeholder="Ej. 7860000000">
 
             <div id="seccion-extra" style="display: none;">
-                <label id="label-extra-1">Dato Adicional:</label>
+                <label id="label-extra-1">Dato Adicional 1:</label>
                 <input type="text" id="extra_1" placeholder="">
                 
-                <label id="label-extra-2">Dato Adicional:</label>
+                <label id="label-extra-2">Dato Adicional 2:</label>
                 <input type="text" id="extra_2" placeholder="">
             </div>
             
             <div class="buttons">
                 <button class="secondary" onclick="siguienteStep(3)">Atrás</button>
-                <button onclick="enviarDatos()" style="background: #28a745;">¡Sí, Todo es Correcto y Generar!</button>
+                <button onclick="enviarDatos()" style="background: #28a745;">¡Generar Guía Oficial Garantizada!</button>
             </div>
         </div>
     </div>
 
     <div class="loading" id="loading-box">
-        <p>Verificando datos y generando documento blindado...</p>
+        <p>Validando parámetros y generando documento oficial...</p>
     </div>
 </div>
 
@@ -127,28 +128,24 @@
     }
 
     function validarPaso1() {
-        const nombre = document.getElementById('primer_nombre').value.trim();
-        if (!nombre) {
-            alert('⚠️ El primer nombre es obligatorio y no puede quedar en blanco.');
+        if (!document.getElementById('primer_nombre').value.trim()) {
+            alert('⚠️ El primer nombre es obligatorio.');
             return;
         }
         siguienteStep(2);
     }
 
     function validarPaso2() {
-        const apellido = document.getElementById('primer_apellido').value.trim();
-        if (!apellido) {
-            alert('⚠️ El apellido paterno es obligatorio y no puede quedar en blanco.');
+        if (!document.getElementById('primer_apellido').value.trim()) {
+            alert('⚠️ El apellido paterno es obligatorio.');
             return;
         }
         siguienteStep(3);
     }
 
     function validarPaso3() {
-        const fecha = document.getElementById('fecha_nacimiento').value;
-        const lugar = document.getElementById('lugar_nacimiento').value.trim();
-        if (!fecha || !lugar) {
-            alert('⚠️ Debe completar la fecha y el lugar de nacimiento obligatoriamente.');
+        if (!document.getElementById('fecha_nacimiento').value || !document.getElementById('lugar_nacimiento').value.trim()) {
+            alert('⚠️ Debe completar la fecha y lugar de nacimiento.');
             return;
         }
         siguienteStep(4);
@@ -162,15 +159,15 @@
         const inp2 = document.getElementById('extra_2');
 
         if (tipo === 'matricula') {
-            lbl1.innerText = "Contacto de Emergencia (Nombre Obligatorio):";
+            lbl1.innerText = "Contacto de Emergencia (Nombre Completo):";
             inp1.placeholder = "Ej. MARÍA PÉREZ";
-            lbl2.innerText = "Teléfono de Emergencia (Obligatorio):";
+            lbl2.innerText = "Teléfono de Emergencia (10 dígitos):";
             inp2.placeholder = "Ej. 7861111111";
         } else if (tipo === 'registro') {
             lbl1.innerText = "Nombre del Padre/Madre Mexicano(a):";
             inp1.placeholder = "Ej. CARLOS PÉREZ";
-            lbl2.innerText = "Hospital o Lugar en EE. UU.:";
-            inp2.placeholder = "Ej. JACKSON MEMORIAL";
+            lbl2.innerText = "Hospital o Lugar de Nacimiento en EE. UU.:";
+            inp2.placeholder = "Ej. JACKSON MEMORIAL HOSPITAL";
         }
     }
 
@@ -179,7 +176,7 @@
         const tel = document.getElementById('telefono').value.trim();
 
         if (!dir || !tel) {
-            alert('⚠️ Cuidado: La dirección y el teléfono en EE. UU. no pueden quedar en blanco.');
+            alert('⚠️ La dirección completa con código postal y el teléfono son obligatorios.');
             return;
         }
 
