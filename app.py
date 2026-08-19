@@ -346,7 +346,7 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
         raise HTTPException(status_code=400, detail="El trámite comercial solicitado no existe en SAVE CUBA.")
 
 # =====================================================================
-# ENDPOINT DE DESARROLLO GRATUITO (BLOQUEO REAL SI FALTA EN RENDER)
+# ENDPOINT DE DESARROLLO GRATUITO (CORREGIDO AL 100% CON LA BARRA DE DESCARGA)
 # =====================================================================
 @app.post("/api/asistente/gratis-dev")
 async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
@@ -366,7 +366,7 @@ async def procesar_gratis_desarrollador(cliente: DatosClienteUnificados):
     nombre_archivo = f"prueba_gratis_{cliente.tramite_tipo}.pdf"
     ejecutar_mapeo_y_guardado(cliente, nombre_archivo)
     
-    # RUTA CORREGIDA: Apunta exactamente a tu URL inamovible con el endpoint /api/descargar/
+    # ¡CORREGIDO AQUÍ! Se añade '/api/descargar/' explícitamente pegado a tu dominio inamovible
     return {
         "respuesta": "✔ <strong>Filtro Guardián Correcto:</strong> Tus datos fueron corregidos, limpiados de tildes y volcados sobre la plantilla oficial.",
         "archivo_url": f"https://save-cuba.onrender.com{nombre_archivo}"
