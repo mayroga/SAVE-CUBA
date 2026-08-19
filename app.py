@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from pypdf import PdfWriter, PdfReader
 
@@ -18,6 +19,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Montar archivos estáticos y servir index.html en la raíz
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+async def root():
+    return FileResponse("static/index.html")
 # Directorios de trabajo
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PLANTILLAS_DIR = os.path.join(BASE_DIR, "plantillas")
