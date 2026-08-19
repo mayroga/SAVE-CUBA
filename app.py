@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from pypdf import PdfWriter, PdfReader
 
-app = FastAPI(title="SAVE CUBA / AURA API", version="3.0")
+app = FastAPI(title="SAVE CUBA API", version="3.0")
 
 # Configuración de CORS
 app.add_middleware(
@@ -19,12 +19,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Montar archivos estáticos y servir index.html en la raíz
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.get("/")
-async def root():
-    return FileResponse("static/index.html")
 # Directorios de trabajo
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PLANTILLAS_DIR = os.path.join(BASE_DIR, "plantillas")
@@ -32,6 +26,13 @@ SALIDAS_DIR = os.path.join(BASE_DIR, "salidas")
 
 os.makedirs(PLANTILLAS_DIR, exist_ok=True)
 os.makedirs(SALIDAS_DIR, exist_ok=True)
+
+# Montar archivos estáticos y servir index.html en la raíz
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+async def root():
+    return FileResponse("static/index.html")
 
 # =====================================================================
 # MODELOS DE DATOS UNIFICADOS (CLIENTE Y TRAMITES)
@@ -79,7 +80,6 @@ def validar_y_limpiar_pasaporte(pasaporte: Optional[str], es_obligatorio: bool =
 def traducir_historial_laboral_ia(texto_espanol: Optional[str]) -> str:
     if not texto_espanol:
         return "N/A"
-    # Capa base de traducción/adaptación técnica para formularios en inglés de USCIS
     texto_mayus = texto_espanol.strip().upper()
     traducciones_comunes = {
         "ESTUDIANTE": "STUDENT",
@@ -98,13 +98,12 @@ def rellenar_planilla_pdf(nombre_archivo_plantilla: str, campos: dict, nombre_ar
     ruta_salida = os.path.join(SALIDAS_DIR, nombre_archivo_salida)
 
     if not os.path.exists(ruta_plantilla):
-        raise HTTPException(status_code=500, detail=f"Error interno: No se encuentra la plantilla oficial '{nombre_archivo_plantilla}'.")
+        raise HTTPException(status_code=500, detail=f"Error interno: No se encuentra la plantilla oficial '{nombre_archivo_plantilla}' en la carpeta plantillas.")
 
     reader = PdfReader(ruta_plantilla)
     writer = PdfWriter()
     writer.append(reader)
 
-    # Aplicar campos rellenables si el PDF posee formularios acroform
     if writer.get_fields():
         try:
             writer.update_page_form_field_values(writer.pages[0], campos)
@@ -113,6 +112,7 @@ def rellenar_planilla_pdf(nombre_archivo_plantilla: str, campos: dict, nombre_ar
 
     with open(ruta_salida, "wb") as f_out:
         writer.write(f_out)
+
 # =====================================================================
 # MOTOR SEPARADOR Y EJECUTOR DE TRÁMITES (AUTOLLENADO COMPLETO Y REAL)
 # =====================================================================
@@ -170,7 +170,6 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
         with open(ruta_paquete, "wb") as f:
             pdf_final.write(f)
 
-        # Limpieza de temporales
         for temp_file in ["temp_g1450.pdf", "temp_i485.pdf", "temp_i765.pdf"]:
             ruta_temp = os.path.join(SALIDAS_DIR, temp_file)
             if os.path.exists(ruta_temp):
@@ -240,7 +239,6 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
         with open(ruta_paquete, "wb") as f:
             pdf_final.write(f)
             
-        # Limpieza de temporales
         for temp_file in ["temp_g1450.pdf", "temp_n400.pdf"]:
             ruta_temp = os.path.join(SALIDAS_DIR, temp_file)
             if os.path.exists(ruta_temp):
@@ -251,16 +249,14 @@ def ejecutar_mapeo_y_guardado(cliente: DatosClienteUnificados, id_archivo_salida
           
     else:
         raise HTTPException(status_code=400, detail="El trámite solicitado no existe en el sistema.")
+
 # =====================================================================
 # ENDPOINTS DE LA API (PROCESAMIENTO Y DESCARGA)
 # =====================================================================
 @app.post("/api/procesar-tramite")
 async def procesar_tramite(cliente: DatosClienteUnificados):
     try:
-        # Generar un identificador único para el archivo de salida
         id_unico = f"paquete_{cliente.tramite_tipo}_{os.urandom(4).hex()}.pdf"
-        
-        # Ejecutar el motor de mapeo y autollenado real
         ejecutar_mapeo_y_guardado(cliente, id_unico)
         
         return JSONResponse(
@@ -277,10 +273,8 @@ async def procesar_tramite(cliente: DatosClienteUnificados):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error crítico en el servidor al procesar el trámite: {str(e)}")
 
-
 @app.get("/api/descargar-pdf/{archivo_id}")
 async def descargar_pdf(archivo_id: str):
-    # Validar seguridad básica del nombre de archivo
     if ".." in archivo_id or "/" in archivo_id or "\\" in archivo_id:
         raise HTTPException(status_code=400, detail="Nombre de archivo no válido.")
         
@@ -295,20 +289,6 @@ async def descargar_pdf(archivo_id: str):
         filename=archivo_id
     )
 
-
-@app.get("/")
-async def root():
-    return {
-        "status": "online",
-        "system": "AURA / SAVE CUBA API",
-        "version": "3.0",
-        "description": "Motor de autollenado de planillas oficiales activo."
-    }
-
-
-# =====================================================================
-# INICIO DE LA APLICACIÓN
-# =====================================================================
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
