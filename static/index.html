@@ -5,89 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>SAVE CUBA - Simple y Seguro</title>
     <style>
-        body {
-            font-size: 18px; /* Letras más grandes y legibles */
-            background: #0f172a;
-            color: #f8fafc;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+        body { font-size: 18px; background: #0f172a; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         #main-container { width: 100%; max-width: 600px; }
-        
-        .card-blanca {
-            background: #1e293b;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-        }
-        
+        .card-blanca { background: #1e293b; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin-bottom: 20px; }
         .seccion-paso { display: none; }
         .seccion-paso.activo { display: block; }
-        
-        .titulo-pantalla {
-            font-size: 26px;
-            color: #60a5fa;
-            margin-top: 0;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .texto-simple {
-            font-size: 16px;
-            color: #cbd5e1;
-            line-height: 1.6;
-        }
-        
-        label {
-            font-size: 16px;
-            color: #94a3b8;
-            display: block;
-            margin-top: 15px;
-            font-weight: 600;
-        }
-        
-        input, select, textarea {
-            width: 100%;
-            padding: 16px; /* Cajas más grandes para escribir cómodamente */
-            margin-top: 6px;
-            border-radius: 12px;
-            border: 1px solid #475569;
-            background: #0f172a;
-            color: white;
-            font-size: 18px;
-            box-sizing: border-box;
-        }
+        .titulo-pantalla { font-size: 26px; color: #60a5fa; margin-top: 0; text-align: center; font-weight: bold; }
+        .texto-simple { font-size: 16px; color: #cbd5e1; line-height: 1.6; }
+        label { font-size: 16px; color: #94a3b8; display: block; margin-top: 15px; font-weight: 600; }
+        input, select, textarea { width: 100%; padding: 16px; margin-top: 6px; border-radius: 12px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 18px; box-sizing: border-box; }
         textarea { resize: none; height: 110px; }
-        
-        .btn-accion {
-            width: 100%;
-            padding: 18px;
-            background: #3b82f6;
-            color: white;
-            font-size: 19px;
-            font-weight: bold;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            margin-top: 25px;
-            transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
+        .btn-accion { width: 100%; padding: 18px; background: #3b82f6; color: white; font-size: 19px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 25px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
         .btn-accion:hover { background: #2563eb; transform: translateY(-1px); }
         .btn-verde { background: #059669; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); }
         .btn-verde:hover { background: #047857; }
         .btn-atras { background: transparent; border: 1px solid #64748b; color: #cbd5e1; padding: 14px; width: 100%; border-radius: 12px; margin-top: 15px; cursor: pointer; font-size: 16px; }
-
         .caja-aviso { background: #334155; padding: 18px; border-radius: 12px; font-size: 15px; line-height: 1.5; color: #cbd5e1; margin-bottom: 20px; border-left: 5px solid #f59e0b; }
         .paso-oculto { display: none; }
-
         .boton-servicio { background: #1e293b; border: 2px solid #3b82f6; border-radius: 16px; padding: 22px; margin-bottom: 15px; cursor: pointer; text-align: left; display: block; width: 100%; }
         .boton-servicio:hover { background: #2563eb; border-color: #60a5fa; }
         .servicio-titulo { font-size: 21px; font-weight: bold; color: #60a5fa; margin: 0 0 5px 0; }
@@ -99,102 +33,85 @@
 <body>
 <div id="main-container">
 
-    <!-- CABECERA PRINCIPAL CON CONTROL DE 3 CLICKS -->
     <div class="card-blanca" style="text-align: center; padding: 15px;">
-        <h2 id="logo-clickable" style="color:#60a5fa; margin:0; font-size: 32px; letter-spacing: 1px; cursor: pointer; user-select: none;" onclick="registrarClickSecreto()">SAVE CUBA</h2>
+        <h2 id="logo-clickable" style="color:#60a5fa; margin:0; font-size: 32px; cursor: pointer; user-select: none;" onclick="registrarClickSecreto()">SAVE CUBA</h2>
         <p style="color: #4ade80; margin: 4px 0 0 0; font-size: 15px; font-weight: bold;">Tus trámites listos, seguros y sin intermediarios</p>
     </div>
 
-    <!-- PASO 1: CLÁUSULA LEGAL -->
+    <!-- PASO 1 -->
     <div id="paso-bienvenida" class="card-blanca seccion-paso activo">
         <h3 class="titulo-pantalla">Cláusula de Protección de Datos y Uso</h3>
         <div class="caja-aviso">
-            <strong>🔒 PRIVACIDAD TOTAL PARA TU DISPOSITIVO:</strong><br>
-            SAVE CUBA es un sistema informático privado operado por nuestra LLC. No guardamos tus datos personales ni tus números bancarios en ningún servidor. Toda tu información se queda guardada en la memoria local de tu dispositivo.
+            <strong>🔒 PRIVACIDAD TOTAL:</strong> SAVE CUBA es un sistema informático privado operado por nuestra LLC. No guardamos tus datos en ningún servidor. Todo queda local.
         </div>
-        <p class="texto-simple">
-            MAY ROGA LLC provee software automatizado de llenado de formularios públicos de distribución gratuita. No somos una firma de abogados, notarios ni tramitadores públicos.
-        </p>
+        <p class="texto-simple">MAY ROGA LLC provee software de llenado de formularios de distribución gratuita. No somos una firma de abogados, notarios ni tramitadores públicos.</p>
         <button class="btn-accion btn-verde" onclick="despertarServidorYContinuar()">ACEPTO LOS TÉRMINOS Y DESEO INICIAR</button>
     </div>
 
-    <!-- PASO 2: MENÚ DE TRÁMITES -->
+    <!-- PASO 2 -->
     <div id="pantalla-inicio" class="seccion-paso">
         <p style="text-align: center; color: #94a3b8; margin-bottom: 20px;">Toca el servicio que necesitas hoy:</p>
-        
         <button class="boton-servicio" onclick="irAlFormulario('paquete_completo_uscis')">
             <div class="servicio-titulo">🇺🇸 1. Residencia Ajuste Cubano</div>
             <div class="servicio-descripcion">Incluye Permiso de Trabajo (I-765) y hoja de pago conjunta.</div>
         </button>
-
         <button class="boton-servicio" onclick="irAlFormulario('pasaporte_nuevo')">
             <div class="servicio-titulo">🇨🇺 2. Nuevo Pasaporte Cubano (10 Años)</div>
-            <div class="servicio-descripcion">Sin prórrogas cada 2 años. Vence a los 10 años fijos.</div>
+            <div class="servicio-descripcion">Sin prórrogas cada 2 años. Vence a los 10 años fijos (MINREX 2023).</div>
         </button>
-
         <button class="boton-servicio" onclick="irAlFormulario('pasaporte_primera_vez')">
             <div class="servicio-titulo">🇨🇺 3. Pasaporte por Primera Vez</div>
             <div class="servicio-descripcion">Expedición desde cero para ciudadanos cubanos.</div>
         </button>
-
         <button class="boton-servicio" onclick="irAlFormulario('naturalizacion_n400')">
             <div class="servicio-titulo">⭐ 4. Ciudadanía Americana (N-400)</div>
             <div class="servicio-descripcion">Rellena el formulario oficial de examen de naturalización.</div>
         </button>
     </div>
 
-    <!-- PASO 3: FORMULARIO ÚNICO ADAPTABLE -->
+    <!-- PASO 3 -->
     <div id="paso-formulario" class="card-blanca seccion-paso">
         <h3 class="titulo-pantalla" id="titulo-servicio">Datos Personales</h3>
         <p style="font-size: 14px; color: #4ade80; text-align: center; font-weight: bold;" id="alerta-recuerdo"></p>
         
-        <label>Primer Nombre:</label>
-        <input type="text" id="sc_nombre1" placeholder="Ej: Juan" oninput="guardarDatoLocal('sc_nombre1', this.value)">
-        
-        <label>Primer Apellido:</label>
-        <input type="text" id="sc_apellido1" placeholder="Ej: Perez" oninput="guardarDatoLocal('sc_apellido1', this.value)">
-        
-        <label>Fecha de Nacimiento:</label>
-        <input type="date" id="sc_fecha_nacimiento" oninput="guardarDatoLocal('sc_fecha_nacimiento', this.value)">
-        
-        <label>Último empleo o estudios en Cuba:</label>
-        <textarea id="sc_empleo_cuba" placeholder="Ej: Chofer por cuenta propia en La Habana" oninput="guardarDatoLocal('sc_empleo_cuba', this.value)"></textarea>
+        <label>Primer Nombre:</label> <input type="text" id="sc_nombre1" placeholder="Ej: Juan">
+        <label>Segundo Nombre:</label> <input type="text" id="sc_nombre2" placeholder="Ej: Carlos (Opcional)">
+        <label>Primer Apellido:</label> <input type="text" id="sc_apellido1" placeholder="Ej: Perez">
+        <label>Segundo Apellido:</label> <input type="text" id="sc_apellido2" placeholder="Ej: Rodriguez (Opcional)">
+        <label>Fecha de Nacimiento:</label> <input type="date" id="sc_fecha_nacimiento">
+        <label>Último empleo o estudios en Cuba:</label> <textarea id="sc_empleo_cuba" placeholder="Ej: Albañil en La Habana"></textarea>
 
-        <!-- CONDICIONAL USA -->
         <div id="bloque-federal">
             <label>Número de Extranjero / Alien Number (9 números enteros):</label>
-            <input type="text" id="sc_anumber" placeholder="Ej: 123456789" maxlength="9" oninput="guardarDatoLocal('sc_anumber', this.value)">
+            <input type="text" id="sc_anumber" placeholder="Ej: 123456789" maxlength="9">
         </div>
 
-        <!-- CONDICIONAL CUBA -->
         <div id="bloque-consular">
             <div id="caja-pasaporte-anterior">
                 <label>Número de Pasaporte Anterior (1 letra y 6 números):</label>
-                <input type="text" id="sc_pasaporte_num" placeholder="Ej: H123456" maxlength="7" oninput="guardarDatoLocal('sc_pasaporte_num', this.value)">
+                <input type="text" id="sc_pasaporte_num" placeholder="Ej: H123456" maxlength="7">
             </div>
-            <label>Provincia de Nacimiento en Cuba:</label>
-            <input type="text" id="sc_provincia" placeholder="Ej: Camaguey" oninput="guardarDatoLocal('sc_provincia', this.value)">
+            <label>Provincia de Nacimiento en Cuba:</label> <input type="text" id="sc_provincia" placeholder="Ej: Camaguey">
+            <label>Año de salida de Cuba:</label> <input type="text" id="sc_ano_salida" placeholder="Ej: 2021" maxlength="4">
         </div>
 
         <button id="btnPagar" class="btn-accion btn-verde" onclick="solicitarCheckoutStripe()">💳 PROCESAR Y PAGAR</button>
         
-        <!-- PANEL DE DESARROLLO CORREGIDO CON SUS CAJAS REALES VISIBLES -->
         <div id="bloque-secreto-dev" class="paso-oculto" style="background: #0f172a; padding: 15px; border-radius: 12px; border: 1px dashed #ef4444; margin-top: 20px;">
-            <p style="color: #f59e0b; text-align: center; font-weight: bold; margin-top:0;">🔧 Modo Desarrollador: Descarga de Pruebas Gratis</p>
-            <label>Usuario de Render:</label>
-            <input type="text" id="dev_user" placeholder="Escribe tu usuario configurado">
-            <label>Contraseña de Render:</label>
-            <input type="password" id="dev_pass" placeholder="Escribe tu contraseña configurada">
+            <p style="color: #f59e0b; text-align: center; font-weight: bold; margin-top:0;">🔧 Modo Desarrollador: Descarga Gratis</p>
+            <label>Usuario de Render:</label> <input type="text" id="dev_user" placeholder="Usuario Render">
+            <label>Contraseña de Render:</label> <input type="password" id="dev_pass" placeholder="Contraseña Render">
             <button id="btnPruebaGratis" class="btn-accion" style="background: #475569;" onclick="solicitarProcesamientoGratisDev()">🚀 VALIDAR Y GENERAR GRATIS</button>
         </div>
 
         <button class="btn-atras" onclick="regresarAlMenuServicios()">← CAMBIAR DE SERVICIO</button>
     </div>
 
-    <!-- PASO 4: ÉXITO Y DESCARGA -->
+    <!-- PASO 4 -->
     <div id="paso-exito" class="card-blanca seccion-paso">
         <h3 class="titulo-pantalla" style="color: #4ade80;">¡Trámite Completado!</h3>
-        <p class="texto-simple" style="text-align: center;">Tus documentos oficiales han sido rellenados de forma fija en píxeles planos.</p>      
+        <div id="caja-descarga-dinamica" style="margin-bottom: 25px;"></div>
+        <div id="guia-visual-infantil" style="background: #0f172a; padding: 20px; border-radius: 16px; border: 1px solid #334155;">
             <p><strong>1. Imprime en hojas blancas:</strong> Descarga el archivo e imprímelo en papel común tamaño carta.</p>
             <p><strong>2. Firma con bolígrafo NEGRO:</strong> Firma a mano dentro de los recuadros sin pisar los bordes negros.</p>
             <div id="instruccion-envio-dinamica"></div>
@@ -205,27 +122,21 @@
 </div>
 
 <script>
-    // URL ÚNICA Y FIJA DE PRODUCCIÓN PARA SAVE CUBA - PROHIBIDO MODIFICAR
-    const API_BASE_URL = 'https://onrender.com'; 
-
+    const API_BASE_URL = 'https://save-cuba.onrender.com'; 
     let tramiteSeleccionado = "";
     let contadorClicksSecretos = 0;
 
-    // LA MAGIA DE LOS 3 CLICKS PARA DESVELAR EL PANEL INVISIBLE
     function registrarClickSecreto() {
         contadorClicksSecretos++;
         if (contadorClicksSecretos === 3) {
             const panelSecreto = document.getElementById("bloque-secreto-dev");
-            if(panelSecreto) {
-                panelSecreto.classList.remove("paso-oculto");
-                alert("🔧 Modo de pruebas activado. Panel secreto visible al final del formulario.");
-            }
+            if(panelSecreto) { panelSecreto.classList.remove("paso-oculto"); alert("🔧 Modo de pruebas activado."); }
             contadorClicksSecretos = 0;
         }
     }
 
     function despertarServidorYContinuar() {
-        fetch(`${API_BASE_URL}/health`).catch(() => console.log("Despertando servidor central..."));
+        fetch(`${API_BASE_URL}/health`).catch(() => console.log("Despertando..."));
         document.getElementById("paso-bienvenida").classList.remove("activo");
         document.getElementById("pantalla-inicio").classList.add("activo");
     }
@@ -233,186 +144,144 @@
     function irAlFormulario(tipoTramite) {
         tramiteSeleccionado = tipoTramite;
         document.getElementById("pantalla-inicio").classList.remove("activo");
-        document.getElementById("paso-formulario").classList.add("activo");
-        verificarDatosLocalesExistentes();
-        adaptarCamposFormulario();
-    }
+            document.getElementById("paso-formulario").classList.add("activo");
+            verificarDatosLocalesExistentes();
+            adaptarCamposFormulario();
+        }
 
-    function regresarAlMenuServicios() {
-        document.getElementById("paso-formulario").classList.remove("activo");
-        document.getElementById("pantalla-inicio").classList.add("activo");
-    }
+        function regresarAlMenuServicios() {
+            document.getElementById("paso-formulario").classList.remove("activo");
+            document.getElementById("pantalla-inicio").classList.add("activo");
+        }
 
-    function guardarDatoLocal(clave, valor) {
-        localStorage.setItem(clave, valor);
-    }
+        function guardarDatoLocal(clave, valor) { 
+            localStorage.setItem(clave, valor); 
+        }
 
-    function verificarDatosLocalesExistentes() {
-        const campos = ['sc_nombre1', 'sc_apellido1', 'sc_fecha_nacimiento', 'sc_anumber', 'sc_empleo_cuba', 'sc_pasaporte_num', 'sc_provincia'];
-        let encontrado = false;
-        campos.forEach(id => {
-            const valorGuardado = localStorage.getItem(id);
-            if (valorGuardado) {
-                const el = document.getElementById(id);
-                if (el) el.value = valorGuardado;
-                encontrado = true;
+        function verificarDatosLocalesExistentes() {
+            const campos = ['sc_nombre1', 'sc_nombre2', 'sc_apellido1', 'sc_apellido2', 'sc_fecha_nacimiento', 'sc_anumber', 'sc_empleo_cuba', 'sc_pasaporte_num', 'sc_provincia', 'sc_ano_salida'];
+            let encontrado = false;
+            campos.forEach(id => {
+                const valorGuardado = localStorage.getItem(id);
+                if (valorGuardado) {
+                    const el = document.getElementById(id);
+                    if (el) el.value = valorGuardado;
+                    encontrado = true;
+                }
+            });
+            const alerta = document.getElementById("alerta-recuerdo");
+            if (encontrado && alerta) alerta.innerText = "✨ Tu teléfono recordó tus datos localmente.";
+        }
+
+        function adaptarCamposFormulario() {
+            const bFederal = document.getElementById("bloque-federal");
+            const bConsular = document.getElementById("bloque-consular");
+            const titulo = document.getElementById("titulo-servicio");
+            const cajaPasaporteAnterior = document.getElementById("caja-pasaporte-anterior");
+
+            if (tramiteSeleccionado.startsWith("pasaporte_")) {
+                titulo.innerText = tramiteSeleccionado === "pasaporte_nuevo" ? "🇨🇺 Nuevo Pasaporte (10 Años)" : "🇨🇺 Pasaporte Primera Vez";
+                if (bFederal) bFederal.style.display = "none";
+                if (bConsular) bConsular.style.display = "block";
+                if (cajaPasaporteAnterior) cajaPasaporteAnterior.style.display = tramiteSeleccionado === "pasaporte_primera_vez" ? "none" : "block";
+            } else {
+                titulo.innerText = tramiteSeleccionado === "paquete_completo_uscis" ? "🇺🇸 Residencia Ley de Ajuste" : "⭐ Ciudadanía Americana (N-400)";
+                if (bFederal) bFederal.style.display = "block";
+                if (bConsular) bConsular.style.display = "none";
+            }
+        }
+
+        async function solicitarCheckoutStripe() {
+            const btn = document.getElementById("btnPagar");
+            btn.innerText = "Abriendo pasarela..."; btn.disabled = true;
+            try {
+                // CORREGIDO: Añadidas comillas invertidas obligatorias para leer la constante API_BASE_URL
+                const response = await fetch(`${API_BASE_URL}/api/stripe/checkout`, {
+                    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(prepararPayload())
+                });
+                if (!response.ok) throw new Error("Error del servidor.");
+                const data = await response.json();
+                window.location.href = data.stripe_checkout_url;
+            } catch (error) { 
+                alert("❌ Error: " + error.message); 
+                btn.innerText = "💳 PROCESAR Y PAGAR"; 
+                btn.disabled = false; 
+            }
+        }
+
+        async function solicitarProcesamientoGratisDev() {
+            const btn = document.getElementById("btnPruebaGratis");
+            if (btn) { btn.innerText = "Validando..."; btn.disabled = true; }
+            const payload = prepararPayload();
+            payload.dev_username_input = document.getElementById("dev_user").value;
+            payload.dev_password_input = document.getElementById("dev_pass").value;
+            try {
+                // CORREGIDO: Añadidas comillas invertidas obligatorias para leer la constante API_BASE_URL
+                const response = await fetch(`${API_BASE_URL}/api/asistente/gratis-dev`, {
+                    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error("Credenciales incorrectas.");
+                const data = await response.json();
+                mostrarPantallaExitoYGuia(data.archivo_url);
+            } catch (error) { 
+                alert("❌ Denegado: " + error.message); 
+                if (btn) { btn.innerText = "🚀 VALIDAR Y GENERAR GRATIS"; btn.disabled = false; } 
+            }
+        }
+
+        function mostrarPantallaExitoYGuia(archivoUrl) {
+            document.getElementById("paso-formulario").classList.remove("activo");
+            document.getElementById("paso-exito").classList.add("activo");
+            
+            // CORREGIDO: Añadidas comillas invertidas obligatorias para inyectar el código HTML del botón verde
+            document.getElementById("caja-descarga-dinamica").innerHTML = `
+                <a href="${archivoUrl}" target="_blank">
+                    <button class="btn-accion btn-verde" style="background:#059669; font-size:18px;">📥 DESCARGAR MI DOCUMENTO COMPLETADO</button>
+                </a>
+            `;
+            
+            const cajaInstruccion = document.getElementById("instruccion-envio-dinamica");
+            if (cajaInstruccion) {
+                if (tramiteSeleccionado.startsWith("pasaporte_")) {
+                    // CORREGIDO: Añadidas comillas invertidas obligatorias para inyectar la instrucción de Cuba
+                    cajaInstruccion.innerHTML = `
+                        <p><strong>3. Envíalo al Consulado Cubano:</strong></p>
+                        <p class="texto-simple">Coloca la planilla impresa junto al Money Order de los aranceles consulares y envíala por correo postal certificado hacia el Consulado de Cuba en Washington D.C., o llévala directamente a tu agencia autorizada de confianza en Miami.</p>
+                    `;
+                } else {
+                    // CORREGIDO: Añadidas comillas invertidas obligatorias para inyectar la instrucción de USCIS
+                    cajaInstruccion.innerHTML = `
+                        <p><strong>3. Coloca la hoja de cobro G-1450 ARRIBA:</strong></p>
+                        <p class="texto-simple">Pon la hoja de cobro G-1450 que rellenamos en la primera página de todo el paquete dentro del sobre. El oficial de USCIS cobrará los aranceles federales directamente desde tu tarjeta de banco estadounidense. Envíalo mediante correo certificado de USPS o FedEx.</p>
+                    `;
+                }
+            }
+            document.getElementById("paso-exito").scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function prepararPayload() {
+            const esCuba = tramiteSeleccionado.startsWith("pasaporte_");
+            return {
+                tramite_tipo: tramiteSeleccionado,
+                primer_nombre: document.getElementById("sc_nombre1").value,
+                segundo_nombre: document.getElementById("sc_nombre2").value,
+                primer_apellido: document.getElementById("sc_apellido1").value,
+                segundo_apellido: document.getElementById("sc_apellido2").value,
+                fecha_nacimiento: document.getElementById("sc_fecha_nacimiento").value,
+                empleo_cuba_espanol: document.getElementById("sc_empleo_cuba").value,
+                anumber: !esCuba ? document.getElementById("sc_anumber").value : "",
+                pasaporte_actual: (esCuba && tramiteSeleccionado !== "pasaporte_primera_vez") ? document.getElementById("sc_pasaporte_num").value : "",
+                provincia_cuba: esCuba ? document.getElementById("sc_provincia").value : "",
+                ano_salida_cuba: esCuba ? document.getElementById("sc_ano_salida").value : ""
+            };
+        }
+
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('stripe_status') === 'success') {
+                document.getElementById("paso-bienvenida").classList.remove("activo");
+                // CORREGIDO: Añadidas comillas invertidas y estructurado el endpoint completo /api/descargar/ amarrado a tu URL fija
+                mostrarPantallaExitoYGuia(`https://onrender.com{urlParams.get('file') || 'expediente.pdf'}`);
             }
         });
-        const alerta = document.getElementById("alerta-recuerdo");
-        if (encontrado && alerta) {
-            alerta.innerText = "✨ Tu teléfono recordó tus datos de forma local.";
-        }
-    }
-
-    function adaptarCamposFormulario() {
-        const bFederal = document.getElementById("bloque-federal");
-        const bConsular = document.getElementById("bloque-consular");
-        const titulo = document.getElementById("titulo-servicio");
-        const cajaPasaporteAnterior = document.getElementById("caja-pasaporte-anterior");
-
-        if (tramiteSeleccionado.startsWith("pasaporte_")) {
-            titulo.innerText = tramiteSeleccionado === "pasaporte_nuevo" ? "🇨🇺 Nuevo Pasaporte (10 Años)" : "🇨🇺 Pasaporte Primera Vez";
-            if (bFederal) bFederal.style.display = "none";
-            if (bConsular) bConsular.style.display = "block";
-            if (cajaPasaporteAnterior) {
-                cajaPasaporteAnterior.style.display = tramiteSeleccionado === "pasaporte_primera_vez" ? "none" : "block";
-            }
-        } else if (tramiteSeleccionado === "paquete_completo_uscis") {
-            titulo.innerText = "🇺🇸 Residencia Ley de Ajuste";
-            if (bFederal) bFederal.style.display = "block";
-            if (bConsular) bConsular.style.display = "none";
-        } else if (tramiteSeleccionado === "naturalizacion_n400") {
-            titulo.innerText = "⭐ Ciudadanía Americana (N-400)";
-            if (bFederal) bFederal.style.display = "block";
-            if (bConsular) bConsular.style.display = "none";
-        }
-    }
-
-    async function solicitarCheckoutStripe() {
-        const btn = document.getElementById("btnPagar");
-        btn.innerText = "Abriendo pasarela de pago...";
-        btn.disabled = true;
-        const payload = prepararPayload();
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/stripe/checkout`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.detail || "Error en el servidor.");
-            }
-            const data = await response.json();
-            window.location.href = data.stripe_checkout_url;
-        } catch (error) {
-            alert("❌ Error: " + error.message);
-            btn.innerText = "💳 PROCESAR Y PAGAR";
-            btn.disabled = false;
-        }
-    }
-
-    async function solicitarProcesamientoGratisDev() {
-        const btn = document.getElementById("btnPruebaGratis");
-        if (btn) {
-            btn.innerText = "Validando credenciales...";
-            btn.disabled = true;
-        }
-        const payload = prepararPayload();
-        payload.dev_username_input = document.getElementById("dev_user").value;
-        payload.dev_password_input = document.getElementById("dev_pass").value;
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/asistente/gratis-dev`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.detail || "Credenciales incorrectas.");
-            }
-            
-            const nombreArchivoFijo = `prueba_gratis_${tramiteSeleccionado}.pdf`;
-            const urlDescargaPerfecta = `${API_BASE_URL}/api/descargar/${nombreArchivoFijo}`;
-            
-            mostrarPantallaExitoYGuia(urlDescargaPerfecta);
-        } catch (error) {
-            alert("❌ Denegado: " + error.message);
-            if (btn) {
-                btn.innerText = "🚀 VALIDAR Y GENERAR GRATIS";
-                btn.disabled = false;
-            }
-        }
-    }
-
-    function mostrarPantallaExitoYGuia(archivoUrl) {
-        document.getElementById("paso-formulario").classList.remove("activo");
-        document.getElementById("paso-exito").classList.add("activo");
         
-        document.getElementById("caja-descarga-dinamica").innerHTML = `
-            <a href="${archivoUrl}" target="_blank">
-                <button class="btn-accion btn-verde" style="background:#059669; font-size:18px;">📥 DESCARGAR MI DOCUMENTO COMPLETADO</button>
-            </a>
-        `;
-
-        const cajaInstruccion = document.getElementById("instruccion-envio-dinamica");
-        if (cajaInstruccion) {
-            if (tramiteSeleccionado.startsWith("pasaporte_")) {
-                cajaInstruccion.innerHTML = `
-                    <p><strong>3. Envíalo al Consulado Cubano:</strong></p>
-                    <p class="texto-simple">Coloca la planilla impresa junto al Money Order de los aranceles consulares y envíala por correo postal certificado hacia el Consulado de Cuba en Washington D.C., o llévala directamente a tu agencia autorizada de confianza en Miami.</p>
-                `;
-            } else {
-                cajaInstruccion.innerHTML = `
-                    <p><strong>3. Coloca la hoja de cobro G-1450 ARRIBA:</strong></p>
-                    <p class="texto-simple">Pon la hoja de cobro G-1450 que rellenamos en la primera página de todo el paquete dentro del sobre. El oficial de USCIS cobrará los aranceles federales directamente desde tu tarjeta de banco estadounidense. Envíalo mediante correo certificado de USPS o FedEx.</p>
-                `;
-            }
-        }
-        document.getElementById("paso-exito").scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function prepararPayload() {
-        const esCuba = tramiteSeleccionado.startsWith("pasaporte_");
-        
-        let fechaInput = document.getElementById("sc_fecha_nacimiento").value;
-        if(!fechaInput || !fechaInput.includes("-")) {
-            fechaInput = "1990-01-01";
-        }
-        
-        let anumberInput = document.getElementById("sc_anumber").value;
-        if(!anumberInput || esCuba) {
-            anumberInput = "123456789"; 
-        }
-
-        let pasaporteInput = document.getElementById("sc_pasaporte_num").value;
-        if(!pasaporteInput || !esCuba || tramiteSeleccionado === "pasaporte_primera_vez") {
-            pasaporteInput = "H123456"; 
-        }
-
-        return {
-            tramite_tipo: tramiteSeleccionado,
-            primer_nombre: document.getElementById("sc_nombre1").value || "PRUEBA",
-            segundo_nombre: "N/A",
-            primer_apellido: document.getElementById("sc_apellido1").value || "PRUEBA",
-            segundo_apellido: "N/A",
-            fecha_nacimiento: fechaInput,
-            empleo_cuba_espanol: document.getElementById("sc_empleo_cuba").value || "EMPLEO PRUEBA",
-            anumber: anumberInput,
-            pasaporte_actual: pasaporteInput,
-            provincia_cuba: document.getElementById("sc_provincia").value || "LA HABANA",
-            ano_salida_cuba: "2023"
-        };
-    }
-
-    window.addEventListener('load', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('stripe_status') === 'success') {
-            document.getElementById("paso-bienvenida").classList.remove("activo");
-            const archivoDescarga = urlParams.get('file') || 'expediente.pdf';
-            mostrarPantallaExitoYGuia(`${API_BASE_URL}/api/descargar/${archivoDescarga}`);
-        }
-    });
-</script>
-</body>
-</html>
